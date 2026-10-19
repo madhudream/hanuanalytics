@@ -41,6 +41,8 @@ export interface Project {
   public_key: string;
   domains: string[];
   allow_no_origin: boolean;
+  /** Native app ids (iOS bundle id, Android package) allowed to send without an Origin. */
+  apps: string[];
   timezone: string;
   recording: RecordingConfig;
   autocapture: AutocaptureConfig;
@@ -56,6 +58,7 @@ export type ProjectPatch = Partial<
     | "name"
     | "domains"
     | "allow_no_origin"
+    | "apps"
     | "timezone"
     | "recording"
     | "autocapture"

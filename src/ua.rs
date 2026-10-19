@@ -45,7 +45,32 @@ fn major(v: &str) -> String {
     v.split('.').next().unwrap_or("").to_string()
 }
 
+/// The native SDKs send `<App>/<version> (<device>; <OS> <version>; …) hanu-swift/<sdk version>`
+/// (or `hanu-android/`). Their app name is the developer's, so the bot word list does not apply.
+fn native(ua: &str) -> Option<Ua> {
+    let os = if ua.contains(" hanu-swift/") {
+        "iOS"
+    } else if ua.contains(" hanu-android/") {
+        "Android"
+    } else {
+        return None;
+    };
+    let app_version = ua.split(' ').next().and_then(|t| t.split_once('/')).map(|(_, v)| v.to_string()).unwrap_or_default();
+    let os_version = if os == "iOS" { major(&version_after(ua, "iOS ")) } else { major(&version_after(ua, "Android ")) };
+    let tablet = ua.contains("iPad") || ua.contains("Tablet");
+    Some(Ua {
+        browser: format!("{os} app"),
+        browser_version: major(&app_version),
+        os: os.into(),
+        os_version,
+        device: if tablet { "tablet".into() } else { "mobile".into() },
+    })
+}
+
 pub fn parse(ua: &str) -> Ua {
+    if let Some(n) = native(ua) {
+        return n;
+    }
     let mut out = Ua::default();
     if is_bot(ua) {
         out.device = "bot".into();
@@ -148,6 +173,17 @@ mod tests {
         assert_eq!(u.os, "iOS");
         assert_eq!(u.os_version, "17");
         assert_eq!(u.device, "mobile");
+    }
+    #[test]
+    fn ios_app() {
+        let u = parse("BigIndianHub/1.4 (iPhone; iOS 26.0; Scale/3.00) hanu-swift/0.1.0");
+        assert_eq!(u.browser, "iOS app");
+        assert_eq!(u.browser_version, "1");
+        assert_eq!(u.os, "iOS");
+        assert_eq!(u.os_version, "26");
+        assert_eq!(u.device, "mobile");
+        // an app whose name has a bot word in it is still a person
+        assert_eq!(parse("Robotics/2.0 (iPad; iOS 18.1; Scale/2.00) hanu-swift/0.1.0").device, "tablet");
     }
     #[test]
     fn bot() {

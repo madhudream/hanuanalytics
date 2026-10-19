@@ -1,5 +1,6 @@
 //! The public API the SDK talks to: config, events, recording chunks. Every request carries a project public
-//! key and is accepted only from the project's allowed domains.
+//! key and is accepted only from the project's allowed domains, or from one of its native apps (no Origin,
+//! `X-Hanu-App: <bundle id>`).
 use crate::app::App;
 use crate::events::{classify_source, Event};
 use crate::live::LiveEvent;
@@ -96,19 +97,35 @@ fn reply(headers: &HeaderMap, status: StatusCode, body: Value) -> Response {
 pub async fn preflight(headers: HeaderMap) -> Response {
     let mut h = cors(&headers);
     h.insert(header::ACCESS_CONTROL_ALLOW_METHODS, HeaderValue::from_static("GET, POST, OPTIONS"));
-    h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, HeaderValue::from_static("content-type, content-encoding"));
+    h.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, HeaderValue::from_static("content-type, content-encoding, x-hanu-app"));
     h.insert(header::ACCESS_CONTROL_MAX_AGE, HeaderValue::from_static("86400"));
     (StatusCode::NO_CONTENT, h).into_response()
 }
 
-/// Token -> project, with the Origin / Referer check.
+/// The native app a request names itself as (`X-Hanu-App`), when it sends one.
+fn app_id(headers: &HeaderMap) -> Option<String> {
+    let v = headers.get("x-hanu-app")?.to_str().ok()?.trim();
+    (!v.is_empty()).then(|| v.to_string())
+}
+
+/// Token -> project, with the Origin / Referer check. A request with no Origin passes when it names one of
+/// the project's native apps, or when the project allows requests without an Origin at all. Like the Origin
+/// check this keeps honest clients in their lane; the public key is public, so it is not authentication.
 fn authorize(app: &App, token: &str, headers: &HeaderMap) -> Result<Arc<Project>, (StatusCode, &'static str)> {
     let p = app.meta.project_by_key(token.trim()).ok_or((StatusCode::UNAUTHORIZED, "invalid token"))?;
-    match origin_host(headers) {
-        Some(h) if p.allows_host(&h) => Ok(p),
-        Some(_) => Err((StatusCode::FORBIDDEN, "origin not allowed")),
-        None if p.allow_no_origin => Ok(p),
-        None => Err((StatusCode::FORBIDDEN, "origin required")),
+    check_origin(&p, origin_host(headers), app_id(headers))?;
+    Ok(p)
+}
+
+fn check_origin(p: &Project, origin: Option<String>, app: Option<String>) -> Result<(), (StatusCode, &'static str)> {
+    match (origin, app) {
+        (Some(h), _) if p.allows_host(&h) => Ok(()),
+        (Some(_), _) => Err((StatusCode::FORBIDDEN, "origin not allowed")),
+        (None, Some(a)) if p.allows_app(&a) => Ok(()),
+        (None, Some(_)) if p.allow_no_origin => Ok(()),
+        (None, Some(_)) => Err((StatusCode::FORBIDDEN, "app not allowed")),
+        (None, None) if p.allow_no_origin => Ok(()),
+        (None, None) => Err((StatusCode::FORBIDDEN, "origin required")),
     }
 }
 
@@ -435,4 +452,40 @@ pub async fn recording(State(app): State<App>, Query(q): Query<TokenQuery>, head
         return reply(&headers, StatusCode::INTERNAL_SERVER_ERROR, json!({"ok": false, "error": "storage error"}));
     }
     reply(&headers, StatusCode::OK, json!({"ok": true}))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn project(domains: &[&str], apps: &[&str], allow_no_origin: bool) -> Project {
+        let mut p: Project = serde_json::from_value(json!({
+            "_id": "p_t", "org_id": "o_t", "name": "t", "public_key": "ha_pk_t", "created_at": "2026-10-19T00:00:00Z"
+        }))
+        .unwrap();
+        p.domains = domains.iter().map(|d| d.to_string()).collect();
+        p.apps = apps.iter().map(|d| d.to_string()).collect();
+        p.allow_no_origin = allow_no_origin;
+        p
+    }
+
+    #[test]
+    fn native_app_passes_without_origin() {
+        let p = project(&["example.com"], &["com.example.ios"], false);
+        assert!(check_origin(&p, None, Some("com.example.ios".into())).is_ok());
+        assert!(check_origin(&p, None, Some("COM.Example.iOS".into())).is_ok());
+        assert_eq!(check_origin(&p, None, Some("com.other.app".into())).unwrap_err().1, "app not allowed");
+        assert_eq!(check_origin(&p, None, None).unwrap_err().1, "origin required");
+    }
+
+    #[test]
+    fn origin_rules_unchanged() {
+        let p = project(&["example.com"], &["com.example.ios"], false);
+        assert!(check_origin(&p, Some("www.example.com".into()), None).is_ok());
+        // an app header never rescues a browser origin that is not listed
+        assert_eq!(check_origin(&p, Some("evil.test".into()), Some("com.example.ios".into())).unwrap_err().1, "origin not allowed");
+        let open = project(&["example.com"], &[], true);
+        assert!(check_origin(&open, None, None).is_ok());
+        assert!(check_origin(&open, None, Some("com.any.app".into())).is_ok());
+    }
 }

@@ -109,6 +109,10 @@ pub struct Project {
     pub domains: Vec<String>,
     #[serde(default)]
     pub allow_no_origin: bool,
+    /// Native apps (iOS bundle ids, Android package names) allowed to send without an Origin; they name
+    /// themselves in the `X-Hanu-App` header. See docs/CONTRACT.md §2 "Native apps".
+    #[serde(default)]
+    pub apps: Vec<String>,
     #[serde(default = "default_tz")]
     pub timezone: String,
     #[serde(default)]
@@ -145,7 +149,7 @@ impl Project {
     pub fn public(&self) -> Value {
         json!({
             "id": self.id, "org_id": self.org_id, "name": self.name, "public_key": self.public_key,
-            "domains": self.domains, "allow_no_origin": self.allow_no_origin, "timezone": self.timezone,
+            "domains": self.domains, "allow_no_origin": self.allow_no_origin, "apps": self.apps, "timezone": self.timezone,
             "recording": self.recording, "autocapture": self.autocapture, "cookieless": self.cookieless,
             "retention_days": self.retention_days, "recording_retention_days": self.recording_retention_days,
             "session_timeout_ms": self.session_timeout_ms, "respect_dnt": self.respect_dnt, "created_at": self.created_at
@@ -169,6 +173,12 @@ impl Project {
             return false;
         }
         self.domains.iter().any(|d| domain_matches(d, &host))
+    }
+
+    /// A native app id from `X-Hanu-App`, matched exactly (case-insensitive) against the project's apps.
+    pub fn allows_app(&self, app: &str) -> bool {
+        let app = app.trim().to_ascii_lowercase();
+        !app.is_empty() && self.apps.iter().any(|a| a.eq_ignore_ascii_case(&app))
     }
 }
 
@@ -339,6 +349,7 @@ impl Meta {
             public_key: ids::random_key("ha_pk_", 32),
             domains: clean_domains(domains),
             allow_no_origin: false,
+            apps: Vec::new(),
             timezone: timezone.filter(|t| t.parse::<chrono_tz::Tz>().is_ok()).unwrap_or_else(default_tz),
             recording: RecordingConfig::default(),
             autocapture: AutocaptureConfig::default(),
@@ -430,6 +441,19 @@ pub fn clean_domains(domains: Vec<String>) -> Vec<String> {
         .collect();
     out.sort();
     out.dedup();
+    out
+}
+
+/// App ids are reverse-DNS names (`com.example.app`): lowercase letters, digits, dots, dashes, underscores.
+pub fn clean_apps(apps: Vec<String>) -> Vec<String> {
+    let mut out: Vec<String> = apps
+        .into_iter()
+        .map(|a| a.trim().to_ascii_lowercase())
+        .filter(|a| !a.is_empty() && a.len() < 255 && a.contains('.') && a.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_')))
+        .collect();
+    out.sort();
+    out.dedup();
+    out.truncate(20);
     out
 }
 

@@ -149,6 +149,26 @@ session rotation starts a new recording (sequence 0 with a full snapshot).
 * **Opt-out**: `hanu.optOut()` stores a flag; a cookie banner can call it. `respectDnt` honours the browser setting.
 * Bots, headless browsers and automation (`navigator.webdriver`) send nothing.
 
+## Native iOS
+
+`sdk/swift/HanuAnalytics.swift` is the iOS client: one file, Foundation and UIKit only. Copy it into the app
+target, then:
+
+```swift
+HanuAnalytics.shared.configure(token: "ha_pk_…", host: URL(string: "https://analytics.example.com"), appId: "com.example.app")
+HanuAnalytics.shared.screen("/events/123", title: "Garba night")   // per screen: $pageview + $pageleave
+HanuAnalytics.shared.capture("signup", ["plan": "pro"])
+HanuAnalytics.shared.identify("user_42", set: ["email": "a@b.c"])
+HanuAnalytics.shared.reset()                                        // on sign-out
+HanuAnalytics.shared.captureError(error)                            // Errors page
+```
+
+Add the app id under Settings → Domains → **Native apps** (or the requests are refused with `app not allowed`).
+Events batch every 10 s or 50 events and flush when the app goes to the background; a failed batch waits for
+the next flush. Ids live in `UserDefaults`; the session renews after 30 minutes away, as on the web. Screens
+show as `app://<app id>/<path>` (Hostname = the app id), the browser as `iOS app`. No session replay on native.
+An empty token leaves the client off, which is how a Debug build stays out of the numbers.
+
 ## Build and test
 
 ```sh

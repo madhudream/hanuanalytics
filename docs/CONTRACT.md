@@ -34,6 +34,18 @@ project's `domains` (`example.com` matches `example.com` and `www.example.com`; 
 subdomain; `localhost` and `127.0.0.1` with any port are allowed when listed). Failing that → `403 {"error":"origin not allowed"}`.
 Requests without any Origin/Referer (curl, server side) are allowed only if the project has `allow_no_origin: true`.
 
+**Native apps.** An app sends no Origin. It names itself in the `X-Hanu-App` header (its iOS bundle id or
+Android package, e.g. `com.example.app`), and the request passes when that id is in the project's `apps`
+(exact match, case-insensitive) or the project has `allow_no_origin: true`; otherwise `403 {"error":"app not
+allowed"}`. A request that carries an Origin is judged by its Origin alone. Like the Origin check this keeps
+honest clients in their lane; the public key is public. Native SDKs:
+* send `lib: "hanu-swift"` (or `hanu-android`) and the User-Agent `<App>/<version> (<iPhone|iPad>; iOS <version>; Scale/<n>) hanu-swift/<sdk version>`,
+  which the server reads as browser `iOS app` (or `Android app`), browser_version the app's major version, device `mobile` or `tablet`,
+  and never as a bot;
+* report a screen as `$pageview` with `$current_url` = `app://<app id><path>` (so `hostname` is the app id and the
+  website's pages stay apart), and `$pageleave` with `$duration_ms`;
+* add `$app_version` and `$device_model` to props; send no recordings (`/api/v1/r` is web only).
+
 ### `GET /hanu.js` · `GET /hanu-rec.js`
 The SDK core (small) and the lazily loaded recording bundle (rrweb). `Cache-Control: public, max-age=3600, stale-while-revalidate=86400`, ETag, gzip/br.
 
@@ -111,7 +123,7 @@ interface User    { id: string; email: string; name: string; created_at: string 
 interface Org     { id: string; name: string; created_at: string; role: Role }
 interface RecordingConfig { enabled: boolean; sample_rate: number; mask_all_inputs: boolean; mask_text_selector: string; block_selector: string; min_duration_ms: number }
 interface AutocaptureConfig { pageviews: boolean; clicks: boolean; forms: boolean; errors: boolean; vitals: boolean; scroll: boolean }
-interface Project { id: string; org_id: string; name: string; public_key: string; domains: string[]; allow_no_origin: boolean;
+interface Project { id: string; org_id: string; name: string; public_key: string; domains: string[]; allow_no_origin: boolean; apps: string[];
                     timezone: string; recording: RecordingConfig; autocapture: AutocaptureConfig; cookieless: boolean;
                     retention_days: number; recording_retention_days: number; created_at: string }
 ```

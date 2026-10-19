@@ -353,6 +353,7 @@ pub struct PatchProject {
     name: Option<String>,
     domains: Option<Vec<String>>,
     allow_no_origin: Option<bool>,
+    apps: Option<Vec<String>>,
     timezone: Option<String>,
     recording: Option<meta::RecordingConfig>,
     autocapture: Option<meta::AutocaptureConfig>,
@@ -378,6 +379,9 @@ pub async fn patch_project(State(app): State<App>, AuthUser(user): AuthUser, Pat
     }
     if let Some(v) = b.allow_no_origin {
         p.allow_no_origin = v;
+    }
+    if let Some(a) = b.apps {
+        p.apps = meta::clean_apps(a);
     }
     if let Some(tz) = b.timezone {
         if tz.parse::<chrono_tz::Tz>().is_err() {

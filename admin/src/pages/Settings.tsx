@@ -82,11 +82,15 @@ export function Settings() {
               <div className="flex max-w-lg flex-col gap-4">
                 <p className="text-[13px] text-t2">Events are accepted only when the page's origin matches one of these. <code className="font-mono">example.com</code> also matches <code className="font-mono">www.example.com</code>; <code className="font-mono">*.example.com</code> matches any subdomain; add <code className="font-mono">localhost</code> for development.</p>
                 <DomainsEditor value={p.domains} onChange={(domains) => up({ domains })} />
+                <div className="flex flex-col gap-2 rounded-lg border hairline px-3 py-2.5">
+                  <div><div className="text-[13px] font-medium">Native apps</div><div className="text-[12px] text-t2">iOS bundle ids or Android package names. Their SDK sends no Origin and names the app in <code className="font-mono">X-Hanu-App</code>; only the apps listed here are accepted.</div></div>
+                  <DomainsEditor kind="app" value={p.apps ?? []} onChange={(apps) => up({ apps })} />
+                </div>
                 <div className="flex items-center justify-between rounded-lg border hairline px-3 py-2.5">
                   <div><div className="text-[13px] font-medium">Allow requests without an Origin</div><div className="text-[12px] text-t2">For server-side or native apps that send no Origin header. Anyone with the public key could then send events.</div></div>
                   <Toggle checked={p.allow_no_origin} onChange={(v) => up({ allow_no_origin: v })} label="Allow no origin" />
                 </div>
-                <div><Button variant="primary" disabled={!dirty || busy || !p.domains.length} onClick={() => save({ domains: p.domains, allow_no_origin: p.allow_no_origin })}>Save changes</Button></div>
+                <div><Button variant="primary" disabled={!dirty || busy || !p.domains.length} onClick={() => save({ domains: p.domains, allow_no_origin: p.allow_no_origin, apps: p.apps ?? [] })}>Save changes</Button></div>
               </div>
             </Card>
           )}

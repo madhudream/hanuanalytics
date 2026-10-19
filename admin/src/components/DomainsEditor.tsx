@@ -3,15 +3,18 @@ import { I } from "./icons";
 import { Button, Input } from "./ui";
 
 const DOMAIN_RE = /^(\*\.)?([a-z0-9-]+\.)*[a-z0-9-]+(:\d+)?$/i;
+const APP_RE = /^[a-z0-9_-]+(\.[a-z0-9_-]+)+$/i;
 
-export function DomainsEditor({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+/** Chips editor for allowed domains, or (kind="app") native app ids such as com.example.ios. */
+export function DomainsEditor({ value, onChange, kind = "domain" }: { value: string[]; onChange: (v: string[]) => void; kind?: "domain" | "app" }) {
   const [draft, setDraft] = useState("");
   const [err, setErr] = useState("");
+  const app = kind === "app";
   const add = () => {
-    const d = draft.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    const d = app ? draft.trim().toLowerCase() : draft.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
     if (!d) return;
-    if (!DOMAIN_RE.test(d)) {
-      setErr("Enter a hostname like example.com or *.example.com");
+    if (!(app ? APP_RE : DOMAIN_RE).test(d)) {
+      setErr(app ? "Enter an app id like com.example.ios" : "Enter a hostname like example.com or *.example.com");
       return;
     }
     if (!value.includes(d)) onChange([...value, d]);
@@ -21,7 +24,7 @@ export function DomainsEditor({ value, onChange }: { value: string[]; onChange: 
   return (
     <div>
       <div className="flex gap-2">
-        <Input value={draft} placeholder="example.com" onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} aria-label="Domain" />
+        <Input value={draft} placeholder={app ? "com.example.ios" : "example.com"} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }} aria-label={app ? "App id" : "Domain"} />
         <Button onClick={add}><I.plus width={14} height={14} />Add</Button>
       </div>
       {err && <div className="mt-1 text-[12px] text-critical">{err}</div>}

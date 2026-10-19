@@ -88,11 +88,11 @@ const defaultAutocapture = () => ({ pageviews: true, clicks: true, forms: true, 
 let projects: Project[] = [
   {
     id: "p_bih", org_id: "o_1", name: "bigindianhub.com", public_key: "ha_pk_7Qm2xk9ZpL4vT8wR1nB6cH3jF5sD0aG2", domains: ["bigindianhub.com", "*.bigindianhub.com", "localhost"],
-    allow_no_origin: false, timezone: "Asia/Kolkata", recording: defaultRecording(), autocapture: defaultAutocapture(), cookieless: false,
+    allow_no_origin: false, apps: [], timezone: "Asia/Kolkata", recording: defaultRecording(), autocapture: defaultAutocapture(), cookieless: false,
     retention_days: 365, recording_retention_days: 30, created_at: "2026-09-01T10:05:00Z",
   },
   {
-    id: "p_docs", org_id: "o_1", name: "docs.hanu.dev", public_key: "ha_pk_Ab3dE6fG9hJ2kL5mN8pQ1rS4tU7vW0xY", domains: ["docs.hanu.dev"], allow_no_origin: false,
+    id: "p_docs", org_id: "o_1", name: "docs.hanu.dev", public_key: "ha_pk_Ab3dE6fG9hJ2kL5mN8pQ1rS4tU7vW0xY", domains: ["docs.hanu.dev"], allow_no_origin: false, apps: [],
     timezone: "UTC", recording: { ...defaultRecording(), enabled: false }, autocapture: defaultAutocapture(), cookieless: true,
     retention_days: 180, recording_retention_days: 14, created_at: "2026-09-20T12:00:00Z",
   },
@@ -430,7 +430,7 @@ export const mockApi: Api = {
 
   async createProject(org, body) {
     await delay();
-    const p: Project = { id: `p_${hashStr(body.name).toString(36).slice(0, 6)}`, org_id: org, name: body.name, public_key: `ha_pk_${hashStr(body.name + "k").toString(36).padEnd(32, "x").slice(0, 32)}`, domains: body.domains, allow_no_origin: false, timezone: body.timezone ?? "UTC", recording: defaultRecording(), autocapture: defaultAutocapture(), cookieless: false, retention_days: 365, recording_retention_days: 30, created_at: new Date().toISOString() };
+    const p: Project = { id: `p_${hashStr(body.name).toString(36).slice(0, 6)}`, org_id: org, name: body.name, public_key: `ha_pk_${hashStr(body.name + "k").toString(36).padEnd(32, "x").slice(0, 32)}`, domains: body.domains, allow_no_origin: false, apps: [], timezone: body.timezone ?? "UTC", recording: defaultRecording(), autocapture: defaultAutocapture(), cookieless: false, retention_days: 365, recording_retention_days: 30, created_at: new Date().toISOString() };
     projects.push(p);
     return p;
   },
