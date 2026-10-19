@@ -9,18 +9,19 @@
 #   --project ID   --domain HOST   --email ADDR   --zone ZONE (us-central1-a)   --name NAME (hanu-1)
 #   --bucket NAME (<project>-hanu)   --tunnel TOKEN (Cloudflare Tunnel: no public IP)   --network NAME (default)
 #   --skip-build   use the existing dist/hanu-linux-amd64
+#   --sslip        also serve https://hanu-<ip>.sslip.io (works before any DNS record exists)
 # Safe to run again: every step checks before it creates. Nothing here is written into the repo.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 [ -f deploy/.env ] && { set -a; . deploy/.env; set +a; }
 PROJECT=${PROJECT:-$(gcloud config get-value project 2>/dev/null || true)}
 DOMAIN=${DOMAIN:-} EMAIL=${EMAIL:-} ZONE=${ZONE:-us-central1-a} NAME=${NAME:-hanu-1} BUCKET=${BUCKET:-} TUNNEL=${TUNNEL:-} NETWORK=${NETWORK:-default}
-UPGRADE= SKIP_BUILD=
+UPGRADE= SKIP_BUILD= SSLIP=${SSLIP:-}
 while [ $# -gt 0 ]; do
   case "$1" in
     --project) PROJECT=$2; shift 2 ;; --domain) DOMAIN=$2; shift 2 ;; --email) EMAIL=$2; shift 2 ;; --zone) ZONE=$2; shift 2 ;;
     --name) NAME=$2; shift 2 ;; --bucket) BUCKET=$2; shift 2 ;; --tunnel) TUNNEL=$2; shift 2 ;; --network) NETWORK=$2; shift 2 ;;
-    --upgrade) UPGRADE=1; shift ;; --skip-build) SKIP_BUILD=1; shift ;;
+    --upgrade) UPGRADE=1; shift ;; --skip-build) SKIP_BUILD=1; shift ;; --sslip) SSLIP=1; shift ;;
     -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
   esac
@@ -28,7 +29,7 @@ done
 [ -n "$PROJECT" ] || { echo "no project: pass --project or set PROJECT in deploy/.env" >&2; exit 2; }
 REGION=${ZONE%-*}
 BUCKET=${BUCKET:-$PROJECT-hanu}
-SA="hanu@$PROJECT.iam.gserviceaccount.com"
+SA="hanuanalytics@$PROJECT.iam.gserviceaccount.com"
 g() { gcloud --project "$PROJECT" --quiet "$@"; }
 step() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 retry() { for i in 1 2 3 4 5 6 7 8 9 10; do "$@" && return 0; echo "  (retrying in 5 s)"; sleep 5; done; return 1; }
@@ -64,7 +65,7 @@ else
 fi
 
 step "service account $SA"
-g iam service-accounts describe "$SA" >/dev/null 2>&1 || g iam service-accounts create hanu --display-name "HanuAnalytics VM"
+g iam service-accounts describe "$SA" >/dev/null 2>&1 || g iam service-accounts create hanuanalytics --display-name "HanuAnalytics VM"
 retry g storage buckets add-iam-policy-binding "gs://$BUCKET" --member "serviceAccount:$SA" --role roles/storage.objectAdmin >/dev/null
 retry g projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/logging.logWriter --condition None >/dev/null
 
@@ -91,12 +92,16 @@ if [ -z "$TUNNEL" ]; then
     g compute firewall-rules create hanu-allow-web --network "$NETWORK" --direction INGRESS --source-ranges 0.0.0.0/0 --allow tcp:80,tcp:443 --target-tags hanu >/dev/null
   g compute addresses describe "$NAME-ip" --region "$REGION" >/dev/null 2>&1 || g compute addresses create "$NAME-ip" --region "$REGION" >/dev/null
   IP=$(g compute addresses describe "$NAME-ip" --region "$REGION" --format 'value(address)')
+  if [ -n "$SSLIP" ]; then
+    SSLIP_HOST="hanu-${IP//./-}.sslip.io"
+    case ",$DOMAIN," in *",$SSLIP_HOST,"*) ;; *) DOMAIN="${DOMAIN:+$DOMAIN,}$SSLIP_HOST" ;; esac
+  fi
 fi
 
 startup=$(mktemp); trap 'rm -f "$startup"' EXIT
 cp deploy/gcp/startup.sh "$startup"
 
-META="hanu-bucket=$BUCKET,hanu-domain=$DOMAIN,hanu-email=$EMAIL,hanu-tunnel=${TUNNEL:+1}"
+META="^;^hanu-bucket=$BUCKET;hanu-domain=$DOMAIN;hanu-email=$EMAIL;hanu-tunnel=${TUNNEL:+1}"
 step "VM $NAME (e2-micro, Debian 12)"
 if g compute instances describe "$NAME" --zone "$ZONE" >/dev/null 2>&1; then
   g compute instances add-metadata "$NAME" --zone "$ZONE" --metadata "$META" --metadata-from-file "startup-script=$startup" >/dev/null
@@ -118,9 +123,10 @@ cat <<DONE
 HanuAnalytics is starting on $NAME (the first boot takes 2-3 minutes: packages, binaries, certificates).
 
   bucket:    gs://$BUCKET   (hanu/ = events + recordings, hanudb/ = the database)
-$( [ -n "${IP:-}" ] && echo "  public IP: $IP   -> create a DNS A record: $DOMAIN -> $IP  (Caddy issues the certificate once it resolves)" )
+$( [ -n "${IP:-}" ] && echo "  public IP: $IP   -> create a DNS A record: ${DOMAIN%%,*} -> $IP  (Caddy issues the certificate once it resolves)" )
+$( [ -n "${SSLIP_HOST:-}" ] && echo "  now:       https://$SSLIP_HOST   (no DNS needed; its certificate is issued on first boot)" )
 $( [ -n "$TUNNEL" ] && echo "  tunnel:    route $DOMAIN -> http://localhost:8090 in Cloudflare Zero Trust" )
-  open:      https://${DOMAIN:-$IP}/setup       (first run: create the admin, the organization and the first project)
+  open:      https://${DOMAIN%%,*}/setup       (first run: create the admin, the organization and the first project)
   logs:      deploy/gcp/logs.sh
   upgrade:   deploy/gcp/up.sh --upgrade
 DONE

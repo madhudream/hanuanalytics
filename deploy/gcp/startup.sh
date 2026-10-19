@@ -76,7 +76,8 @@ WantedBy=multi-user.target
 UNIT
 
 # ---- hanu
-PUBLIC_URL="https://${DOMAIN}"; [ -n "$DOMAIN" ] || PUBLIC_URL="http://$(curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip || echo localhost)"
+PRIMARY=${DOMAIN%%,*}
+PUBLIC_URL="https://${PRIMARY}"; [ -n "$DOMAIN" ] || PUBLIC_URL="http://$(curl -sf -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip || echo localhost)"
 cat > /etc/hanu.env <<ENV
 HANU_LISTEN=127.0.0.1:8090
 HANU_BUCKET=gs://$BUCKET/hanu
@@ -115,9 +116,9 @@ UNIT
 if [ -n "$DOMAIN" ] && [ -z "$TUNNEL" ]; then
 cat > /etc/caddy/Caddyfile <<CADDY
 {
-	email ${EMAIL:-admin@$DOMAIN}
+	email ${EMAIL:-admin@$PRIMARY}
 }
-$DOMAIN {
+$(echo "$DOMAIN" | sed 's/,/, /g') {
 	encode zstd gzip
 	reverse_proxy 127.0.0.1:8090
 }
