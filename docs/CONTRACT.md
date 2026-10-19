@@ -93,6 +93,13 @@ Same content-type/encoding rules; max 4 MB. The SDK gzips with `CompressionStrea
 ```
 Response `200 {"ok":true}`. `seq` starts at 0 per session and increases by 1 per chunk.
 
+### Public, unauthenticated
+
+| method · path | body → response |
+|---|---|
+| `GET /` | the home page (`site/index.html`) for visitors, the admin app for a valid session cookie; `GET /home` always the home page; `GET /site/<file>` its assets |
+| `POST /api/public/request` | `{name,email,website?,message?}` → `{ok:true,id}` (rate-limited per IP; honeypot field `company_url` must be empty) |
+
 ## 3. Admin API (`/api/admin/…`, cookie session)
 
 Cookie `hanu_s` (HttpOnly, SameSite=Lax, JWT HS256, 30 days). Errors are `{"error":"…"}` with 400/401/403/404/409/500.
@@ -132,6 +139,11 @@ interface Project { id: string; org_id: string; name: string; public_key: string
 | `PATCH /projects/:id` | any subset of Project's editable fields → `Project` |
 | `POST /projects/:id/rotate-key` | → `Project` |
 | `DELETE /projects/:id` | → `{ok}` (owner/admin) |
+| `GET /oauth/google/start?next=/&invite=` | redirects to Google (when configured); the callback `GET /oauth/google/callback` sets the cookie and redirects to `next`, or to `/login?error=…` |
+| `GET /users` | → `{totals:{users,orgs,projects}, rows:[{id,email,name,created_at,sign_in:"google"\|"password",is_instance_admin,orgs:[{org_id,org_name,role,projects}]}]}` (instance admin) |
+| `GET /requests?status=new\|approved\|rejected\|all` | → `{rows: Request[]}` (instance admin); `Request = {id,name,email,website,message,created_at,status,invite_url?,org_id?,decided_at?}` |
+| `POST /requests/:id/approve` | `{org_name?}` → `{request}` (creates an org + owner invite; the admin sends the link) |
+| `POST /requests/:id/reject` | → `{request}` |
 | `GET /system` | → `{version, node, uptime_s, hanudb:{ok,url,status?}, store:{kind,url,ok,uploads_ok,uploads_failed}, buffer:{pending_events,last_flush_at,events_written,index_pending,recording_pending_bytes}, geo:{loaded,build,attribution}, files:{events,event_days,disk_used_bytes}, live:{events_30m}, memory:{used_mb,total_mb}, signup_mode, public_url}` |
 | `PATCH /system` | `{signup_mode: "invite" \| "open"}` → `{ok}` (instance admin only) |
 | `POST /system/compact` | → `{merged_files, ms}` |

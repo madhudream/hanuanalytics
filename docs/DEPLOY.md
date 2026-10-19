@@ -51,6 +51,15 @@ A 1 GB swap file is created on first boot; the kernel pages the memory-mapped Ge
 as needed. Environment files: `/etc/hanudb.env`, `/etc/hanu.env`. Data: `/var/lib/hanudb`, `/var/lib/hanu`
 (both are caches; wiping them and rebooting rebuilds from the bucket).
 
+## 2b. Google sign-in (optional)
+
+In the Google Cloud console: OAuth consent screen (External, app name HanuAnalytics), then Credentials → OAuth
+client ID → Web application with the redirect URI `https://DOMAIN/api/admin/oauth/google/callback`. Then either
+`deploy/gcp/set-google.sh <client_id> <client_secret>` or put `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`
+in `deploy/.env` and run the script without arguments. It stores both in Secret Manager (`hanu-google-client-id`,
+`hanu-google-client-secret`); the startup script passes them to the server as `HANU_GOOGLE_CLIENT_ID` /
+`HANU_GOOGLE_CLIENT_SECRET`. The button appears on `/setup`, `/login`, `/register` and invite pages.
+
 ## 3. Operations
 
 ```sh
@@ -69,7 +78,8 @@ deploy/gcp/down.sh              # delete the VM (the bucket and secrets stay)
 * **Backups.** The bucket *is* the data. Turn on Object Versioning or a second region with
   `gcloud storage buckets update --versioning`, or HanuDB's twin-bucket mode for the database part.
 * **The System page** (`/system`) shows HanuDB's status, the bucket, pending buffers, the GeoIP build, disk and
-  memory, and has the compaction button and the sign-up switch (invite-only or open).
+  memory, the Accounts table (every user and their organizations), and has the compaction button and the sign-up
+  switch (invite-only or open). **Requests** lists hosted-account requests from the home page.
 
 ## 4. Cost (us-central1, 2026 list prices)
 

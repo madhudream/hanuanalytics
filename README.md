@@ -82,7 +82,19 @@ in [docs/SDK.md](docs/SDK.md), the npm/ESM build in `sdk/dist/hanu.esm.js`.
 ## Hosted beta
 
 A hosted instance runs at [analytics.carebun.com](https://analytics.carebun.com): request an account on the home
-page, free while in beta. The home page (`site/`) ships inside the binary, so every self-hosted instance has one too.
+page, free while in beta. The home page (`site/`) ships inside the binary, so every self-hosted instance has one
+too: `/` shows it to visitors and the dashboard to anyone signed in; `/home` always shows it.
+
+## Accounts and sign-in
+
+* **Setup** (`/setup`): the first account becomes the *instance admin*. Email + password, or "Continue with
+  Google" when a Google OAuth client is configured (`HANU_GOOGLE_CLIENT_ID` / `HANU_GOOGLE_CLIENT_SECRET`, or
+  `deploy/gcp/set-google.sh` on Google Cloud).
+* **Invites**: owners and admins invite by link (no email is sent by the server); the invitee sets a password or
+  joins with Google. **Open sign-up** can be switched on by the instance admin on the System page.
+* **Requests**: visitors ask for a hosted account on the home page; the instance admin approves them on the
+  Requests page, which creates their organization and an invite link to send.
+* **System → Accounts** (instance admin): every user, sign-in method, organizations and roles, totals.
 
 ## Multi-tenant
 
