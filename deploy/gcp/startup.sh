@@ -41,6 +41,8 @@ chmod +x hanu.new
 
 HANUDB_TOKEN=$(gcloud secrets versions access latest --secret hanudb-token)
 SALT=$(gcloud secrets versions access latest --secret hanu-salt)
+GOOGLE_ID=$(gcloud secrets versions access latest --secret hanu-google-client-id 2>/dev/null || true)
+GOOGLE_SECRET=$(gcloud secrets versions access latest --secret hanu-google-client-secret 2>/dev/null || true)
 
 # ---- HanuDB: tuned for the 1 GB VM (the defaults assume it has the machine to itself)
 cat > /etc/hanudb.env <<ENV
@@ -91,6 +93,8 @@ HANU_QUERY_MEM_MB=160
 HANU_FLUSH_SECS=60
 HANU_FLUSH_EVENTS=5000
 HANU_TRUST_PROXY=true
+HANU_GOOGLE_CLIENT_ID=$GOOGLE_ID
+HANU_GOOGLE_CLIENT_SECRET=$GOOGLE_SECRET
 RUST_LOG=info,tower_http=warn,datafusion=warn
 ENV
 chmod 600 /etc/hanu.env

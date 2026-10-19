@@ -30,7 +30,7 @@ async fn signup_mode(app: &App) -> String {
 // ------------------------------------------------------------------ setup / auth
 pub async fn setup_status(State(app): State<App>) -> ApiResult {
     let n = app.meta.user_count().await.map_err(err)?;
-    Ok(Json(json!({"needs_setup": n == 0, "signup_open": signup_mode(&app).await == "open", "version": env!("CARGO_PKG_VERSION")})))
+    Ok(Json(json!({"needs_setup": n == 0, "signup_open": signup_mode(&app).await == "open", "google": crate::oauth::enabled(&app), "version": env!("CARGO_PKG_VERSION")})))
 }
 
 #[derive(Deserialize)]
@@ -94,6 +94,7 @@ pub async fn login(State(app): State<App>, headers: HeaderMap, Json(b): Json<Log
     let user = app.meta.user_by_email(&b.email).await.map_err(err)?;
     match user {
         Some(u) if auth::verify_password(&b.password, &u.pw_hash) => with_cookie(&app, &u, json!({"user": u.public()})),
+        Some(u) if u.pw_hash.is_empty() => Err(ApiError::unauthorized("this account signs in with Google")),
         _ => Err(ApiError::unauthorized("wrong email or password")),
     }
 }

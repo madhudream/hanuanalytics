@@ -14,6 +14,7 @@ mod ingest;
 mod jobs;
 mod live;
 mod meta;
+mod oauth;
 mod query;
 mod recordings;
 mod requests;
@@ -130,6 +131,8 @@ fn router(app: App) -> Router {
     let admin = Router::new()
         .route("/setup", get(admin::setup_status).post(admin::setup))
         .route("/register", post(admin::register))
+        .route("/oauth/google/start", get(oauth::start))
+        .route("/oauth/google/callback", get(oauth::callback))
         .route("/login", post(admin::login))
         .route("/logout", post(admin::logout))
         .route("/me", get(admin::me).patch(admin::update_account))

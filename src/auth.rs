@@ -19,6 +19,9 @@ pub fn hash_password(pw: &str) -> Result<String> {
 }
 
 pub fn verify_password(pw: &str, hash: &str) -> bool {
+    if hash.is_empty() || pw.is_empty() {
+        return false;
+    }
     match PasswordHash::new(hash) {
         Ok(h) => Argon2::default().verify_password(pw.as_bytes(), &h).is_ok(),
         Err(_) => false,

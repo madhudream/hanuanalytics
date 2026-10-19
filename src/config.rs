@@ -61,6 +61,14 @@ pub struct Config {
     #[arg(long, env = "HANU_SALT", default_value = "")]
     pub salt: String,
 
+    /// Google OAuth client id ("Continue with Google" on setup, login, register and invites); empty = off
+    #[arg(long, env = "HANU_GOOGLE_CLIENT_ID", default_value = "")]
+    pub google_client_id: String,
+
+    /// Google OAuth client secret
+    #[arg(long, env = "HANU_GOOGLE_CLIENT_SECRET", default_value = "")]
+    pub google_client_secret: String,
+
     /// trust X-Forwarded-For / X-Real-IP (true behind caddy / cloudflare)
     #[arg(long, env = "HANU_TRUST_PROXY", default_value_t = true)]
     pub trust_proxy: bool,
