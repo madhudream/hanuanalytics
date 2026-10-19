@@ -7,7 +7,10 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 [ -f deploy/.env ] && { set -a; . deploy/.env; set +a; }
 PROJECT=${PROJECT:-$(gcloud config get-value project 2>/dev/null)}; ZONE=${ZONE:-us-central1-a}; NAME=${NAME:-hanu-1}
-[ $# -eq 2 ] || { echo "usage: $0 <client_id> <client_secret>" >&2; exit 2; }
+# arguments, or GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET from deploy/.env
+CID=${1:-${GOOGLE_OAUTH_CLIENT_ID:-}}; CSEC=${2:-${GOOGLE_OAUTH_CLIENT_SECRET:-}}
+[ -n "$CID" ] && [ -n "$CSEC" ] || { echo "usage: $0 <client_id> <client_secret>   (or set GOOGLE_OAUTH_CLIENT_ID / GOOGLE_OAUTH_CLIENT_SECRET in deploy/.env)" >&2; exit 2; }
+set -- "$CID" "$CSEC"
 SA="hanuanalytics@$PROJECT.iam.gserviceaccount.com"
 g() { gcloud --project "$PROJECT" --quiet "$@"; }
 for s in hanu-google-client-id hanu-google-client-secret; do

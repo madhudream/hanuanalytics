@@ -686,3 +686,31 @@ pub async fn compact(State(app): State<App>, AuthUser(_user): AuthUser) -> ApiRe
     let b = app.buffer.compact_days().await.map_err(err)?;
     Ok(Json(json!({"merged_files": a + b, "ms": started.elapsed().as_millis() as u64})))
 }
+
+/// `GET /api/admin/users` — every account on the instance with its organizations (instance admin only).
+pub async fn users(State(app): State<App>, AuthUser(user): AuthUser) -> ApiResult {
+    let admin = app.meta.setting("instance_admin").await.map_err(err)?;
+    if admin.as_deref() != Some(user.id.as_str()) {
+        return Err(ApiError::forbidden("instance admin only"));
+    }
+    let users: Vec<User> = app.meta.db.find(meta::USERS, Find::default().sort("-created_at").limit(5000)).await.map_err(err)?.hits;
+    let members: Vec<Member> = app.meta.db.find(meta::MEMBERS, Find::default().limit(20000)).await.map_err(err)?.hits;
+    let orgs: Vec<meta::Org> = app.meta.db.find(meta::ORGS, Find::default().limit(5000)).await.map_err(err)?.hits;
+    let projects = app.meta.cached_projects();
+    let org_name: std::collections::HashMap<&str, &str> = orgs.iter().map(|o| (o.id.as_str(), o.name.as_str())).collect();
+    let rows: Vec<Value> = users
+        .iter()
+        .map(|u| {
+            let mine: Vec<Value> = members
+                .iter()
+                .filter(|m| m.user_id == u.id)
+                .map(|m| json!({"org_id": m.org_id, "org_name": org_name.get(m.org_id.as_str()).copied().unwrap_or(""), "role": m.role,
+                                "projects": projects.iter().filter(|p| p.org_id == m.org_id).count()}))
+                .collect();
+            json!({"id": u.id, "email": u.email, "name": u.name, "created_at": u.created_at,
+                   "sign_in": if u.pw_hash.is_empty() { "google" } else { "password" },
+                   "is_instance_admin": admin.as_deref() == Some(u.id.as_str()), "orgs": mine})
+        })
+        .collect();
+    Ok(Json(json!({"rows": rows, "totals": {"users": users.len(), "orgs": orgs.len(), "projects": projects.len()}})))
+}

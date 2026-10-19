@@ -100,6 +100,22 @@ export type SignupMode = "invite" | "open";
 
 export type RequestStatus = "new" | "approved" | "rejected";
 
+/** One row of GET /api/admin/users (instance admin only). */
+export interface AccountRow {
+  id: string;
+  email: string;
+  name: string;
+  created_at: string;
+  sign_in: "google" | "password";
+  is_instance_admin: boolean;
+  orgs: { org_id: string; org_name: string; role: Role; projects: number }[];
+}
+
+export interface Accounts {
+  totals: { users: number; orgs: number; projects: number };
+  rows: AccountRow[];
+}
+
 /** A hosted-cloud access request from the public landing page. */
 export interface AccessRequest {
   id: string;
@@ -389,6 +405,7 @@ export interface Api {
   requests(status: RequestStatus | "all"): Promise<{ rows: AccessRequest[] }>;
   approveRequest(id: string, orgName?: string): Promise<{ request: AccessRequest }>;
   rejectRequest(id: string): Promise<{ request: AccessRequest }>;
+  accounts(): Promise<Accounts>;
   // stats
   overview(id: string, q: StatsQuery, interval?: Interval): Promise<Overview>;
   breakdown(id: string, q: StatsQuery, by: Dimension, limit?: number, offset?: number): Promise<Breakdown>;

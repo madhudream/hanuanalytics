@@ -163,6 +163,7 @@ fn router(app: App) -> Router {
         .route("/projects/{id}/persons", get(admin::persons))
         .route("/projects/{id}/persons/{did}", get(admin::person))
         .route("/projects/{id}/sql", post(admin::sql))
+        .route("/users", get(admin::users))
         .route("/requests", get(requests::list))
         .route("/requests/{id}/approve", post(requests::approve))
         .route("/requests/{id}/reject", post(requests::reject))

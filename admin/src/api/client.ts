@@ -72,6 +72,7 @@ export const realApi: Api = {
   requests: (status) => get(`/requests?status=${status}`),
   approveRequest: (id, org_name) => call("POST", `/requests/${encodeURIComponent(id)}/approve`, org_name ? { org_name } : {}),
   rejectRequest: (id) => call("POST", `/requests/${encodeURIComponent(id)}/reject`, {}),
+  accounts: () => get("/users"),
 
   overview: (id, q, interval: Interval = "auto") => get(`/projects/${id}/stats/overview?${statsParams(q, { interval })}`),
   breakdown: (id, q, by: Dimension, limit = 10, offset = 0) => get(`/projects/${id}/stats/breakdown?${statsParams(q, { by, limit, offset })}`),

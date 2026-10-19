@@ -2,7 +2,7 @@
 import type {
   Api, Breakdown, BreakdownRow, Cohort, Dimension, ErrorRow, EventRow, FunnelStep, Interval, Invite, Live, LiveEvent,
   Me, Member, Org, Overview, Person, Project, ProjectPatch, Role, SeriesPoint, Session, SessionDetail, SessionEvent,
-  AccessRequest, SessionsQuery, SignupMode, SqlResult, StatsQuery, SystemInfo, Totals, User, Vitals,
+  AccessRequest, Accounts, SessionsQuery, SignupMode, SqlResult, StatsQuery, SystemInfo, Totals, User, Vitals,
 } from "./types";
 import { ApiError } from "./types";
 import { hashStr, pick, pickW, rng } from "../lib/seed";
@@ -450,6 +450,21 @@ export const mockApi: Api = {
   },
   async compact() { await sleep(900); return { merged_files: 48, ms: 870 }; },
   async setSignupMode(mode) { await delay(); signupMode = mode; },
+  async accounts(): Promise<Accounts> {
+    await delay();
+    const h = (n: number) => new Date(Date.now() - n * 3600000).toISOString();
+    const rows: Accounts["rows"] = [
+      { id: "u_8", email: "kavya@shopkart.in", name: "Kavya Nair", created_at: h(1), sign_in: "google", is_instance_admin: false, orgs: [{ org_id: "o_9", org_name: "ShopKart", role: "owner", projects: 1 }] },
+      { id: "u_7", email: "tom@becker.dev", name: "Tom Becker", created_at: h(7), sign_in: "password", is_instance_admin: false, orgs: [{ org_id: "o_8", org_name: "becker.dev", role: "owner", projects: 1 }] },
+      { id: "u_6", email: "ananya@fintrail.app", name: "Ananya Rao", created_at: h(26), sign_in: "google", is_instance_admin: false, orgs: [{ org_id: "o_7", org_name: "Fintrail", role: "owner", projects: 2 }] },
+      { id: "u_5", email: "dev@fintrail.app", name: "Dev Shah", created_at: h(25), sign_in: "password", is_instance_admin: false, orgs: [{ org_id: "o_7", org_name: "Fintrail", role: "member", projects: 2 }] },
+      { id: "u_4", email: "sam@example.com", name: "Sam Lee", created_at: h(70), sign_in: "google", is_instance_admin: false, orgs: [{ org_id: "o_1", org_name: "Big Indian Hub", role: "member", projects: 2 }] },
+      { id: "u_3", email: "arjun@example.com", name: "Arjun", created_at: h(17 * 24), sign_in: "password", is_instance_admin: false, orgs: [{ org_id: "o_1", org_name: "Big Indian Hub", role: "member", projects: 2 }] },
+      { id: "u_2", email: "priya@example.com", name: "Priya", created_at: h(37 * 24), sign_in: "google", is_instance_admin: false, orgs: [{ org_id: "o_1", org_name: "Big Indian Hub", role: "admin", projects: 2 }, { org_id: "o_7", org_name: "Fintrail", role: "admin", projects: 2 }] },
+      { id: "u_1", email: users[0]!.email, name: users[0]!.name, created_at: users[0]!.created_at, sign_in: "password", is_instance_admin: true, orgs: [{ org_id: "o_1", org_name: "Big Indian Hub", role: "owner", projects: 2 }] },
+    ];
+    return { totals: { users: rows.length, orgs: 4, projects: 6 }, rows };
+  },
   async requests(status) { await delay(); return { rows: requests.filter((r) => status === "all" || r.status === status) }; },
   async approveRequest(id, orgName) {
     await delay();
