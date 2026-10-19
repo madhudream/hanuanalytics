@@ -1,0 +1,54 @@
+[package]
+name = "hanuanalytics"
+version = "0.1.0"
+edition = "2021"
+description = "HanuAnalytics: open-source product analytics and session replay that runs on one free VM with a bucket as its home."
+license = "MIT"
+repository = "https://github.com/madhudream/hanuanalytics"
+
+[[bin]]
+name = "hanu"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.8", features = ["json", "macros", "query"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "compression-gzip", "compression-br", "trace", "set-header"] }
+hyper = "1"
+http = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+datafusion = { version = "55", default-features = false, features = ["parquet", "sql", "nested_expressions", "datetime_expressions", "string_expressions", "unicode_expressions", "regex_expressions", "crypto_expressions", "math_expressions", "encoding_expressions", "compression", "recursive_protection"] }
+object_store = { version = "0.13", features = ["gcp", "aws"] }
+maxminddb = { version = "0.32", features = ["mmap"] }
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "webpki-roots", "http2", "gzip", "stream"] }
+argon2 = "0.6"
+jsonwebtoken = { version = "11", default-features = false, features = ["rust_crypto"] }
+rand = "0.9"
+sha2 = "0.10"
+hex = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+chrono-tz = "0.10"
+rust-embed = { version = "8", features = ["include-exclude"] }
+flate2 = "1"
+clap = { version = "4", features = ["derive", "env"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
+parking_lot = "0.12"
+mime_guess = "2"
+url = "2"
+regex = "1"
+futures = "0.3"
+bytes = "1"
+async-trait = "0.1"
+humantime = "2"
+sysinfo = { version = "0.37", default-features = false, features = ["system", "disk"] }
+
+[profile.release]
+debug = false
+strip = true
+codegen-units = 4
+lto = "thin"
+opt-level = 3

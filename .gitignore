@@ -1,0 +1,27 @@
+# build output
+/target
+/dist
+/sdk/dist/*
+/sdk/node_modules
+/admin/dist/*
+/admin/node_modules
+/node_modules
+/data
+*.log
+
+# cloud account details never go to git
+.env
+.env.*
+!.env.example
+deploy/*.local
+deploy/**/*.local
+*.local.sh
+*.pem
+*.key
+/secrets
+
+.DS_Store
+
+# keep the embed folders present on a fresh clone (cargo build needs them to exist)
+!/admin/dist/.gitkeep
+!/sdk/dist/.gitkeep

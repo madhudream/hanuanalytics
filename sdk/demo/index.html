@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HanuAnalytics SDK demo</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #faf7f2; color: #1b1630; }
+    header { display: flex; gap: 16px; align-items: center; padding: 16px 24px; background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; }
+    header a { color: #e35a00; font-weight: 600; text-decoration: none; }
+    header a.active { text-decoration: underline; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px; }
+    .card { background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+    button.primary { background: #e35a00; color: #fff; border-color: #e35a00; }
+    input { font: inherit; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; }
+    pre { background: #1b1630; color: #ffd27a; padding: 12px; border-radius: 8px; max-height: 260px; overflow: auto; font-size: 12px; }
+    .tall { height: 1400px; background: linear-gradient(#fff, #ffe9cc); border-radius: 12px; display: grid; place-items: end center; padding: 16px; }
+    .status { font-size: 13px; color: #555; }
+  </style>
+  <script>
+    // the token comes from ?token=ha_pk_… so the same page works against any project
+    (function () {
+      var token = new URLSearchParams(location.search).get("token") || "";
+      var host = new URLSearchParams(location.search).get("host") || "http://127.0.0.1:8090";
+      var s = document.createElement("script");
+      s.async = true;
+      s.src = "/dist/hanu.js";
+      s.setAttribute("data-token", token);
+      s.setAttribute("data-api-host", host);
+      s.setAttribute("data-debug", "true");
+      document.head.appendChild(s);
+      window.hanuq = window.hanuq || [];
+      window.hanuq.push(["on", "event", function (e) {
+        var log = document.getElementById("log");
+        if (log) log.textContent = new Date().toISOString().slice(11, 19) + "  " + e.event + "  " + JSON.stringify(e.props).slice(0, 160) + "\n" + log.textContent;
+      }]);
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <strong>Hanu demo</strong>
+    <a href="/page/home" data-nav>Home</a>
+    <a href="/page/pricing" data-nav>Pricing</a>
+    <a href="/page/blog" data-nav>Blog</a>
+    <span class="status" id="status"></span>
+  </header>
+  <main>
+    <div class="card">
+      <h2 id="title">Home</h2>
+      <p>This page is a tiny SPA. Navigation uses <code>history.pushState</code>, so every tab switch should produce a
+        <code>$pageleave</code> followed by a <code>$pageview</code>. Clicks, the form, the error button and outbound links are autocaptured.</p>
+      <p>
+        <button class="primary" id="cta" data-hanu-name="cta">Start free trial</button>
+        <button id="custom">Custom event (signup)</button>
+        <button id="identify">Identify as u_42</button>
+        <button id="error">Throw an error</button>
+        <button id="rage">Rage click me</button>
+        <button id="reset">Reset</button>
+      </p>
+      <p>
+        <a href="https://example.org/" target="_blank" rel="noreferrer">Outbound link</a> ·
+        <a href="/files/report.pdf" download>Download pdf</a> ·
+        <button id="rec-start">Start recording</button>
+        <button id="rec-stop">Stop recording</button>
+      </p>
+    </div>
+    <div class="card">
+      <form id="newsletter" name="newsletter" action="/subscribe" method="post">
+        <label>Email <input type="email" name="email" placeholder="you@example.com"></label>
+        <label>Name <input type="text" name="name" placeholder="your name"></label>
+        <label>Card <input type="text" name="card_number" placeholder="masked in replay"></label>
+        <button type="submit">Subscribe</button>
+      </form>
+    </div>
+    <div class="card">
+      <strong>Events (newest first)</strong>
+      <pre id="log"></pre>
+    </div>
+    <div class="tall">scroll depth 100% reaches here</div>
+  </main>
+  <script>
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest("a[data-nav]");
+      if (!a) return;
+      e.preventDefault();
+      history.pushState({}, "", a.getAttribute("href"));
+      render();
+    });
+    window.addEventListener("popstate", render);
+    function render() {
+      var name = location.pathname.split("/").pop() || "home";
+      document.getElementById("title").textContent = name[0].toUpperCase() + name.slice(1);
+      document.title = "Demo · " + name;
+      document.querySelectorAll("a[data-nav]").forEach(function (a) { a.classList.toggle("active", a.getAttribute("href").endsWith(name)); });
+    }
+    render();
+    var $ = function (id) { return document.getElementById(id); };
+    $("custom").onclick = function () { hanu.capture("signup", { plan: "pro", seats: 3 }); };
+    $("identify").onclick = function () { hanu.identify("u_42", { email: "u42@example.com", plan: "pro" }, { first_plan: "free" }); };
+    $("error").onclick = function () { setTimeout(function () { throw new Error("Demo error: button exploded"); }, 0); };
+    $("reset").onclick = function () { hanu.reset(); };
+    $("rec-start").onclick = function () { hanu.startRecording(); };
+    $("rec-stop").onclick = function () { hanu.stopRecording(); };
+    $("newsletter").onsubmit = function (e) { e.preventDefault(); $("status").textContent = "form submitted (not really)"; };
+    setInterval(function () {
+      if (!window.hanu || !hanu.isEnabled) return;
+      $("status").textContent = (hanu.isEnabled() ? "sdk on" : "sdk off") + " · session " + (hanu.getSessionId() || "-") + " · user " + (hanu.getDistinctId() || "-") + (hanu.isRecording() ? " · recording" : "");
+    }, 1000);
+  </script>
+</body>
+</html>

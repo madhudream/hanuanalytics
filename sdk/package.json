@@ -1,0 +1,38 @@
+{
+  "name": "@hanuanalytics/sdk",
+  "version": "0.1.0",
+  "description": "HanuAnalytics browser SDK: privacy-friendly web analytics, autocapture and session replay in one tiny script.",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "main": "./dist/hanu.esm.js",
+  "module": "./dist/hanu.esm.js",
+  "types": "./dist/hanu.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/hanu.d.ts",
+      "import": "./dist/hanu.esm.js",
+      "default": "./dist/hanu.esm.js"
+    },
+    "./hanu.js": "./dist/hanu.js",
+    "./hanu-rec.js": "./dist/hanu-rec.js"
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": ["./dist/hanu.js", "./dist/hanu-rec.js"],
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "demo": "node demo/serve.mjs"
+  },
+  "repository": { "type": "git", "url": "https://github.com/madhudream/hanuanalytics" },
+  "keywords": ["analytics", "session-replay", "rrweb", "privacy", "web-analytics"],
+  "devDependencies": {
+    "@rrweb/record": "2.1.7",
+    "@rrweb/types": "2.1.7",
+    "esbuild": "0.28.2",
+    "jsdom": "30.1.3",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
+  }
+}
