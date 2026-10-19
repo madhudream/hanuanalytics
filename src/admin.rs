@@ -654,6 +654,7 @@ pub async fn system(State(app): State<App>, AuthUser(_user): AuthUser) -> ApiRes
         "memory": {"used_mb": sys.used_memory() / 1024 / 1024, "total_mb": sys.total_memory() / 1024 / 1024},
         "signup_mode": signup_mode(&app).await,
         "public_url": app.cfg.public_url(),
+        "requests_new": crate::requests::count_new(&app).await,
     })))
 }
 

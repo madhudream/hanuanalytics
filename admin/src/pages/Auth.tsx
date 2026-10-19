@@ -52,7 +52,10 @@ export function Login() {
         <Field label="Password"><Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
         {err && <div className="rounded-lg bg-critical/10 px-3 py-2 text-[13px] text-critical">{err}</div>}
         <Button type="submit" variant="primary" disabled={busy} className="mt-1 justify-center">{busy ? "Signing in…" : "Sign in"}</Button>
-        {signupOpen && <div className="text-center text-[12.5px] text-t3">New here? <Link to="/register" className="text-t1 underline">Create an account</Link></div>}
+        <div className="flex items-center justify-between text-[12.5px] text-t3">
+          <a href="/home" className="hover:text-t1">← Home</a>
+          {signupOpen && <span>New here? <Link to="/register" className="text-t1 underline">Create an account</Link></span>}
+        </div>
       </form>
     </AuthShell>
   );

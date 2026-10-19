@@ -2,7 +2,7 @@
 import type {
   Api, Breakdown, BreakdownRow, Cohort, Dimension, ErrorRow, EventRow, FunnelStep, Interval, Invite, Live, LiveEvent,
   Me, Member, Org, Overview, Person, Project, ProjectPatch, Role, SeriesPoint, Session, SessionDetail, SessionEvent,
-  SessionsQuery, SignupMode, SqlResult, StatsQuery, SystemInfo, Totals, User, Vitals,
+  AccessRequest, SessionsQuery, SignupMode, SqlResult, StatsQuery, SystemInfo, Totals, User, Vitals,
 } from "./types";
 import { ApiError } from "./types";
 import { hashStr, pick, pickW, rng } from "../lib/seed";
@@ -62,6 +62,13 @@ const ERRORS: readonly (readonly [string, string])[] = [
 // ---------- account state ----------
 let setupDone = true;
 let signupMode: SignupMode = "invite";
+const requests: AccessRequest[] = [
+  { id: "r_5", name: "Kavya Nair", email: "kavya@shopkart.in", website: "https://shopkart.in", message: "We run a D2C store with ~200k monthly visitors and want to drop GA. Session replay is the main draw.", created_at: new Date(Date.now() - 2 * 3600000).toISOString(), status: "new" },
+  { id: "r_4", name: "Tom Becker", email: "tom@becker.dev", website: "becker.dev", message: "Personal blog, low traffic. Curious about the cookieless mode.", created_at: new Date(Date.now() - 9 * 3600000).toISOString(), status: "new" },
+  { id: "r_3", name: "Ananya Rao", email: "ananya@fintrail.app", website: "https://app.fintrail.app", message: "Fintech dashboard; need input masking guarantees before we can record anything. Happy to share our DPA requirements — they are long, so here is the short version: no raw IPs, inputs masked client-side, EU data residency optional.", created_at: new Date(Date.now() - 30 * 3600000).toISOString(), status: "approved", invite_url: "https://analytics.example.com/invite/inv_9k2m1a", org_id: "o_7", decided_at: new Date(Date.now() - 26 * 3600000).toISOString() },
+  { id: "r_2", name: "spam bot", email: "win@prizes.example", website: "http://prizes.example", message: "CLICK HERE TO WIN", created_at: new Date(Date.now() - 3 * 86400000).toISOString(), status: "rejected", decided_at: new Date(Date.now() - 3 * 86400000 + 600000).toISOString() },
+  { id: "r_1", name: "Priya Menon", email: "priya@example.com", website: "https://bigindianhub.com", message: "Founder here — this is for our main site.", created_at: new Date(Date.now() - 6 * 86400000).toISOString(), status: "approved", invite_url: "https://analytics.example.com/invite/inv_3f8c2d", org_id: "o_1", decided_at: new Date(Date.now() - 6 * 86400000 + 3600000).toISOString() },
+];
 const users: User[] = [{ id: "u_1", email: "admin@example.com", name: "Madhu", created_at: "2026-09-01T10:00:00Z" }];
 let orgs: Org[] = [{ id: "o_1", name: "Big Indian Hub", created_at: "2026-09-01T10:00:00Z", role: "owner" }];
 const members: Record<string, Member[]> = {
@@ -436,11 +443,31 @@ export const mockApi: Api = {
       version: "0.1.0 (mock)", uptime_s: 86400 * 3 + 4321, hanudb: { ok: true, url: "http://127.0.0.1:8080", status: { txn: 184233, segments: 2410, index_lag: 0, rss_mb: 142 } },
       store: { kind: "gs://example-hanuanalytics", ok: true }, buffer: { pending_events: 37, last_flush_at: new Date(Date.now() - 23000).toISOString() },
       geo: { loaded: true, build: "2026-10" }, files: { events: 1284, recordings: 3920 }, live: { events_30m: 412 },
-      signup_mode: signupMode, public_url: location.origin,
+      signup_mode: signupMode, public_url: location.origin, requests_new: requests.filter((r) => r.status === "new").length,
     };
   },
   async compact() { await sleep(900); return { merged_files: 48, ms: 870 }; },
   async setSignupMode(mode) { await delay(); signupMode = mode; },
+  async requests(status) { await delay(); return { rows: requests.filter((r) => status === "all" || r.status === status) }; },
+  async approveRequest(id, orgName) {
+    await delay();
+    const r = requests.find((x) => x.id === id);
+    if (!r) throw new ApiError(404, "request not found");
+    const org: Org = { id: `o_${Date.now()}`, name: orgName?.trim() || r.name, created_at: new Date().toISOString(), role: "owner" };
+    r.status = "approved";
+    r.org_id = org.id;
+    r.invite_url = `${location.origin}/invite/inv_${hashStr(r.email).toString(36)}`;
+    r.decided_at = new Date().toISOString();
+    return { request: { ...r } };
+  },
+  async rejectRequest(id) {
+    await delay();
+    const r = requests.find((x) => x.id === id);
+    if (!r) throw new ApiError(404, "request not found");
+    r.status = "rejected";
+    r.decided_at = new Date().toISOString();
+    return { request: { ...r } };
+  },
 
   async overview(id, q, interval: Interval = "auto"): Promise<Overview> {
     await delay();

@@ -15,6 +15,10 @@ struct Admin;
 #[include = "*.js"]
 struct Sdk;
 
+#[derive(Embed)]
+#[folder = "site/"]
+struct Site;
+
 fn etag(bytes: &[u8]) -> String {
     use sha2::Digest;
     let h = sha2::Sha256::digest(bytes);
@@ -56,5 +60,37 @@ pub async fn admin(uri: Uri, req: Request<Body>) -> Response {
     match Admin::get("index.html") {
         Some(f) => serve(f.data.into_owned(), "index.html", "no-cache", None),
         None => (StatusCode::SERVICE_UNAVAILABLE, "admin app not built (run scripts/build.sh)").into_response(),
+    }
+}
+
+/// `/`: the product home page for visitors, the admin app for anyone with a session cookie.
+pub async fn root(axum::extract::State(app): axum::extract::State<crate::app::App>, uri: Uri, req: Request<Body>) -> Response {
+    let signed_in = req
+        .headers()
+        .get(header::COOKIE)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|raw| raw.split(';').map(|kv| kv.trim()).find_map(|kv| kv.strip_prefix("hanu_s=")))
+        .map(|t| crate::auth::verify_token(&app.jwt_secret, t).is_some())
+        .unwrap_or(false);
+    if signed_in {
+        admin(uri, req).await
+    } else {
+        home(req).await
+    }
+}
+
+/// `/home`: always the product home page.
+pub async fn home(req: Request<Body>) -> Response {
+    match Site::get("index.html") {
+        Some(f) => serve(f.data.into_owned(), "index.html", "public, max-age=300", req.headers().get(header::IF_NONE_MATCH)),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
+/// `/site/<file>`: images and other assets of the home page.
+pub async fn site_file(Path(file): Path<String>, req: Request<Body>) -> Response {
+    match Site::get(&file) {
+        Some(f) => serve(f.data.into_owned(), &file, "public, max-age=86400", req.headers().get(header::IF_NONE_MATCH)),
+        None => StatusCode::NOT_FOUND.into_response(),
     }
 }

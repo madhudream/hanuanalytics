@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HanuAnalytics — analytics and session replay that runs on one free VM</title>
+<meta name="description" content="Open-source product analytics and session replay. Pageviews, sources, cities, events, funnels, errors, Web Vitals and rrweb replays, with your data in your own bucket. Replaces Google Analytics and PostHog for about one cent a month.">
+<meta property="og:title" content="HanuAnalytics">
+<meta property="og:description" content="Open-source analytics and session replay on one free VM, with a bucket as its home.">
+<meta property="og:image" content="/site/dashboard-dark.png">
+<meta name="theme-color" content="#0d0a14">
+<link rel="icon" href="/site/logo.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#0d0a14;--bg2:#140f1f;--panel:rgba(255,255,255,.04);--line:rgba(255,255,255,.09);
+    --ink:#f5f0ea;--ink2:#b9b0a7;--ink3:#7f766f;
+    --saffron:#ff8a1f;--saffron2:#ffb347;--ember:#e35a00;--mint:#7ce2a8;
+    --radius:18px;--max:1120px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);background:rgba(13,10,20,.72);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:700;letter-spacing:-.3px}
+  .brand img{width:34px;height:34px}
+  .brand b{color:var(--saffron)}
+  .links{display:flex;gap:22px;align-items:center;font-size:14px;color:var(--ink2)}
+  .links a{text-decoration:none}
+  .links a:hover{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:999px;font-weight:600;font-size:14px;text-decoration:none;border:1px solid var(--line);color:var(--ink);background:var(--panel);transition:transform .15s ease,background .15s ease}
+  .btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.08)}
+  .btn.primary{background:linear-gradient(135deg,var(--saffron),var(--ember));border-color:transparent;color:#1a0d00;box-shadow:0 10px 30px -10px rgba(255,138,31,.6)}
+  .btn.primary:hover{background:linear-gradient(135deg,var(--saffron2),var(--saffron))}
+  @media (max-width:720px){.links .hide{display:none}}
+  /* hero */
+  .hero{position:relative;padding:96px 0 48px;text-align:center;overflow:hidden}
+  .orb{position:absolute;inset:auto;left:50%;top:-240px;width:900px;height:900px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,138,31,.28),rgba(227,90,0,.10) 45%,transparent 70%);filter:blur(10px);pointer-events:none;animation:breathe 9s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.06)}}
+  @media (prefers-reduced-motion:reduce){.orb{animation:none}}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--panel)}
+  .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint)}
+  h1{font-size:clamp(40px,7vw,78px);line-height:1.02;letter-spacing:-2.5px;margin:22px auto 18px;max-width:14ch;font-weight:800}
+  h1 em{font-style:normal;background:linear-gradient(90deg,var(--saffron2),var(--saffron) 45%,var(--ember));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:clamp(17px,2vw,21px);color:var(--ink2);max-width:62ch;margin:0 auto 32px}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .snippet{margin:28px auto 0;max-width:720px;background:#07050c;border:1px solid var(--line);border-radius:14px;padding:14px 18px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:#d7cfc6;text-align:left;overflow:auto;white-space:nowrap}
+  .snippet .k{color:var(--saffron2)}.snippet .s{color:var(--mint)}
+  .shot{position:relative;margin:56px auto 0;max-width:1120px;border-radius:22px;border:1px solid var(--line);background:var(--bg2);padding:10px;box-shadow:0 40px 120px -40px rgba(255,138,31,.35),0 30px 60px -30px rgba(0,0,0,.8)}
+  .shot img{width:100%;height:auto;display:block;border-radius:14px}
+  /* sections */
+  section{padding:88px 0}
+  .kicker{color:var(--saffron);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+  h2{font-size:clamp(30px,4.4vw,48px);letter-spacing:-1.5px;line-height:1.08;margin:10px 0 14px;font-weight:800}
+  .sub{color:var(--ink2);font-size:18px;max-width:64ch;margin:0 0 36px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
+  .card{grid-column:span 4;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;transition:border-color .2s}
+  .card:hover{border-color:rgba(255,138,31,.45)}
+  .card.wide{grid-column:span 8}.card.half{grid-column:span 6}
+  .stack{grid-column:span 4;display:grid;gap:14px;align-content:start}
+  .stack .card{grid-column:auto}
+  @media (max-width:860px){.card,.card.wide,.card.half,.stack{grid-column:span 12}}
+  .card h3{margin:0 0 8px;font-size:18px;letter-spacing:-.3px}
+  .card p{margin:0;color:var(--ink2);font-size:15px}
+  .ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(255,138,31,.25),rgba(227,90,0,.12));margin-bottom:14px;font-size:20px}
+  .card img{width:100%;border-radius:12px;border:1px solid var(--line);margin-top:16px}
+  /* how */
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;counter-reset:step}
+  @media (max-width:860px){.flow{grid-template-columns:1fr}}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:24px;position:relative}
+  .step::before{counter-increment:step;content:"0" counter(step);font-weight:800;color:var(--saffron);font-size:13px;letter-spacing:.1em}
+  .step h3{margin:8px 0 6px;font-size:18px}.step p{margin:0;color:var(--ink2);font-size:15px}
+  pre.arch{background:#07050c;border:1px solid var(--line);border-radius:14px;padding:18px;font-size:12.5px;line-height:1.5;color:#cfc7bf;overflow:auto;margin:22px 0 0}
+  /* cost */
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{text-align:left;padding:14px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--ink3);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  td b{color:var(--saffron2)}
+  /* request */
+  .req{background:linear-gradient(180deg,rgba(255,138,31,.10),rgba(255,138,31,0));border:1px solid rgba(255,138,31,.35);border-radius:26px;padding:40px;display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:start}
+  @media (max-width:860px){.req{grid-template-columns:1fr;padding:26px}}
+  form{display:grid;gap:12px}
+  label{font-size:13px;color:var(--ink2)}
+  input,textarea{width:100%;background:#07050c;border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--ink);font:inherit;font-size:15px}
+  input:focus,textarea:focus{outline:2px solid rgba(255,138,31,.6);outline-offset:1px;border-color:transparent}
+  .hp{position:absolute;left:-9999px;opacity:0}
+  .ok{display:none;background:rgba(124,226,168,.1);border:1px solid rgba(124,226,168,.4);border-radius:12px;padding:16px;color:#d8f7e5}
+  .err{display:none;color:#ffb4a2;font-size:14px}
+  footer{border-top:1px solid var(--line);padding:40px 0;color:var(--ink3);font-size:14px}
+  footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer a{color:var(--ink2);text-decoration:none}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;background:rgba(124,226,168,.12);color:var(--mint);font-size:12px;font-weight:600;margin-left:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="brand" href="/home"><img src="/site/logo.svg" alt=""><span><b>Hanu</b>Analytics</span></a>
+  <div class="links">
+    <a class="hide" href="#features">Features</a>
+    <a class="hide" href="#how">How it works</a>
+    <a class="hide" href="#cost">Cost</a>
+    <a class="hide" href="https://github.com/madhudream/hanuanalytics">GitHub</a>
+    <a class="btn" href="/login">Sign in</a>
+    <a class="btn primary" href="#request">Request access</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="orb"></div><div class="wrap">
+  <span class="eyebrow"><i></i> Open source · free hosted beta · your data in your bucket</span>
+  <h1>Analytics and session replay that <em>cost nothing to run</em></h1>
+  <p class="lead">Pageviews, sources, campaigns, cities, devices, custom events, funnels, retention, errors, Web Vitals and full session replays. One 8 KB script. One small VM. A bucket as the database. The Google Analytics and PostHog replacement built for 2026.</p>
+  <div class="cta">
+    <a class="btn primary" href="#request">Request a hosted account</a>
+    <a class="btn" href="https://github.com/madhudream/hanuanalytics">Self-host from GitHub</a>
+  </div>
+  <div class="snippet">&lt;<span class="k">script</span> async src=<span class="s">"https://analytics.carebun.com/hanu.js"</span> data-token=<span class="s">"ha_pk_…"</span>&gt;&lt;/<span class="k">script</span>&gt;</div>
+  <div class="shot"><img src="/site/dashboard-dark.png" alt="The HanuAnalytics dashboard: visitors, pageviews, sessions, top pages and sources" width="1440" height="1000" loading="eager"></div>
+</div></header>
+
+<section id="features"><div class="wrap">
+  <div class="kicker">Everything a product team asks for</div>
+  <h2>The whole picture, not a sample of it</h2>
+  <p class="sub">Install once and every page, click, error and visit is there. Name your own events for the moments that matter.</p>
+  <div class="grid">
+    <div class="card wide"><div class="ico">▶</div><h3>Session replay you can actually afford</h3><p>Watch what a visitor did, with inputs masked before anything leaves their browser. Recordings are stored as compressed chunks in your bucket, so a ten-minute session costs a fraction of a cent, and you choose the sample rate per project.</p><img src="/site/replay-dark.png" alt="A session replay with the event timeline beside it" loading="lazy"></div>
+    <div class="stack">
+      <div class="card"><div class="ico">◎</div><h3>Live view</h3><p>Who is on the site right now, which pages, and the event feed as it happens.</p></div>
+      <div class="card"><div class="ico">☺</div><h3>Persons</h3><p>Identify signed-in users; see their properties, sessions and replays in one place.</p></div>
+      <div class="card"><div class="ico">⌂</div><h3>Teams and projects</h3><p>Organizations, members with roles, invite links, any number of sites, each with its own allowed domains and keys.</p></div>
+    </div>
+    <div class="card"><div class="ico">⌁</div><h3>Pages, sources, campaigns</h3><p>Entry and exit pages, referrers classified (Google, X, LinkedIn, ChatGPT…), UTM source, medium and campaign, bounce rate and time on site per row.</p></div>
+    <div class="card"><div class="ico">⌖</div><h3>Cities and devices</h3><p>Country, region and city from the IP without storing it. Browser, OS, device class and screen size.</p></div>
+    <div class="card"><div class="ico">⚑</div><h3>Events, funnels, retention</h3><p>Count any event, break it down by any property, build a funnel from ordered steps, see weekly cohorts come back.</p></div>
+    <div class="card half"><div class="ico">⚠</div><h3>Errors and Web Vitals</h3><p>JavaScript errors grouped by message with the page they happened on. LCP, CLS, INP, FCP and TTFB at the 75th percentile, split into good, needs improvement and poor.</p></div>
+    <div class="card half"><div class="ico">⌘</div><h3>SQL over your raw events</h3><p>Every event is a row in a Parquet table. Ask anything with SQL, straight from the dashboard, with a JSON accessor for your custom properties. Export CSV.</p></div>
+    <div class="card half"><div class="ico">☂</div><h3>Private by design</h3><p>No raw IPs stored, daily-rotating visitor hashes, cookieless mode, opt-out, Do Not Track, per-project retention.</p></div>
+    <div class="card half"><div class="ico">⚙</div><h3>One binary, one script</h3><p>The server, the admin app, the SDK and this page ship in a single Rust binary. Deploy to Google Cloud's free tier with one command, or anywhere with a bucket.</p></div>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <div class="kicker">How it works</div>
+  <h2>A VM is a cache. The bucket is the truth.</h2>
+  <p class="sub">The same design as <a href="https://github.com/madhudream/hanudb">HanuDB</a>, the database it runs on: one free-tier machine does the work, and everything durable lives in object storage that costs cents.</p>
+  <div class="flow">
+    <div class="step"><h3>Collect</h3><p>The 8 KB script sends batched events with a beacon. The server checks the project's allowed domains, adds geo and device, and buffers.</p></div>
+    <div class="step"><h3>Store</h3><p>Events become zstd Parquet files, one per project per day; recordings become gzip chunks. HanuDB keeps users, projects, sessions and persons.</p></div>
+    <div class="step"><h3>Query</h3><p>Apache DataFusion scans the local mirror of those files. Dashboards are SQL templates, so the explorer gives you the same table.</p></div>
+  </div>
+<pre class="arch">your site  ──&lt;script src=…/hanu.js&gt;──▶  one e2-micro (free tier)                     ──▶  bucket (the truth)
+                                        caddy :443 ─▶ hanu :8090 (Rust, axum, DataFusion)      events/   parquet
+                                                      └─▶ hanudb :8080 (Rust)                   rec/      rrweb chunks
+                                        admin app · SDK · ingest · stats · replay · SQL         hanudb/   its log</pre>
+</div></section>
+
+<section id="cost"><div class="wrap">
+  <div class="kicker">Cost</div>
+  <h2>About one cent a month. Really.</h2>
+  <p class="sub">There is no database server to pay for and queries never read the bucket. The only metered thing is object writes, and events are batched into a few hundred of them a day.</p>
+  <table>
+    <tr><th>Item</th><th>What it costs</th></tr>
+    <tr><td>Compute: one e2-micro VM with a 30 GB disk</td><td><b>$0</b> on Google Cloud's Always Free tier</td></tr>
+    <tr><td>Storage: a million events as Parquet</td><td>about 60 MB, <b>$0.001</b> a month</td></tr>
+    <tr><td>Writes: a site with traffic all day</td><td>about 1 500 objects a day, <b>$0.23</b> a month</td></tr>
+    <tr><td>A ten-minute session recording</td><td>about 300 KB, <b>$0.000006</b></td></tr>
+    <tr><td>The hosted beta on analytics.carebun.com</td><td><b>Free</b> while in beta. Paid plans will come later, with notice; self-hosting stays free forever.</td></tr>
+  </table>
+</div></section>
+
+<section id="open"><div class="wrap">
+  <div class="kicker">Open source</div>
+  <h2>MIT licensed. Run it anywhere.</h2>
+  <p class="sub">One Rust binary with the admin app and the SDK inside. Deploy to Google Cloud with one script, or point it at any S3-compatible bucket and a HanuDB.</p>
+  <div class="cta" style="justify-content:flex-start">
+    <a class="btn primary" href="https://github.com/madhudream/hanuanalytics">github.com/madhudream/hanuanalytics</a>
+    <a class="btn" href="https://github.com/madhudream/hanuanalytics/blob/main/docs/ONBOARDING.md">Onboarding guide</a>
+    <a class="btn" href="https://github.com/madhudream/hanuanalytics/blob/main/docs/SDK.md">SDK reference</a>
+  </div>
+</div></section>
+
+<section id="request"><div class="wrap">
+  <div class="req">
+    <div>
+      <div class="kicker">Hosted beta <span class="pill">free</span></div>
+      <h2 style="font-size:36px">Get an account on analytics.carebun.com</h2>
+      <p class="sub" style="margin-bottom:0">Tell us who you are and where you'll use it. You get an invite link by email, usually the same day. Then it is the snippet above and nothing else: your data stays in our bucket, in your own organization, and you can export it as CSV or Parquet at any time.</p>
+    </div>
+    <form id="f" novalidate>
+      <div><label for="name">Your name</label><input id="name" name="name" required autocomplete="name"></div>
+      <div><label for="email">Work email</label><input id="email" name="email" type="email" required autocomplete="email"></div>
+      <div><label for="website">Website or app</label><input id="website" name="website" placeholder="https://" autocomplete="url"></div>
+      <div><label for="message">What will you track? (optional)</label><textarea id="message" name="message" rows="3"></textarea></div>
+      <div class="hp" aria-hidden="true"><label>Company URL<input name="company_url" tabindex="-1" autocomplete="off"></label></div>
+      <button class="btn primary" type="submit" style="justify-content:center">Request access</button>
+      <div class="err" id="err"></div>
+      <div class="ok" id="ok">Thanks! Your request is in. You'll get an invite link by email once it is approved.</div>
+    </form>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div><b style="color:var(--ink)">HanuAnalytics</b> · Hanuman lifting the mountain: the whole thing, carried by one small machine.</div>
+  <div><a href="https://github.com/madhudream/hanuanalytics">GitHub</a> · <a href="https://github.com/madhudream/hanuanalytics/blob/main/docs/PRIVACY.md">Privacy</a> · <a href="/login">Sign in</a> · IP geolocation by <a href="https://db-ip.com">DB-IP</a></div>
+</div></footer>
+
+<script>
+(function(){
+  var f=document.getElementById('f'),ok=document.getElementById('ok'),err=document.getElementById('err');
+  f.addEventListener('submit',function(e){
+    e.preventDefault();err.style.display='none';
+    var d={};new FormData(f).forEach(function(v,k){d[k]=v});
+    if(!d.name||!d.email||d.email.indexOf('@')<0){err.textContent='Please add your name and a valid email.';err.style.display='block';return;}
+    var b=f.querySelector('button');b.disabled=true;b.textContent='Sending…';
+    fetch('/api/public/request',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(d)})
+      .then(function(r){return r.json().then(function(j){return [r.ok,j]})})
+      .then(function(x){if(x[0]){f.querySelectorAll('input,textarea,button').forEach(function(el){el.style.display='none'});ok.style.display='block';}
+        else{err.textContent=x[1].error||'Something went wrong, please try again.';err.style.display='block';b.disabled=false;b.textContent='Request access';}})
+      .catch(function(){err.textContent='Network error, please try again.';err.style.display='block';b.disabled=false;b.textContent='Request access';});
+  });
+})();
+</script>
+</body>
+</html>

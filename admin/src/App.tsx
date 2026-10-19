@@ -4,6 +4,7 @@ import { StatsProvider } from "./state/stats";
 import { Layout } from "./components/Layout";
 import { Login, AcceptInvite, Register } from "./pages/Auth";
 import { Account } from "./pages/Account";
+import { Requests } from "./pages/Requests";
 import { Setup } from "./pages/Setup";
 import { Dashboard } from "./pages/Dashboard";
 import { Live } from "./pages/Live";
@@ -87,6 +88,7 @@ export function App() {
         <Route path="/org/:org/new-project" element={<NewProject />} />
         <Route path="/system" element={<System />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/requests" element={<Requests />} />
         <Route path="*" element={<Empty title="Page not found" action={<Link to="/"><Button>Go home</Button></Link>} />} />
       </Route>
     </Routes>

@@ -6,6 +6,7 @@ import { Wordmark } from "./Logo";
 import { I } from "./icons";
 import { Button, Dropdown, MenuItem } from "./ui";
 import { applyTheme, getTheme, isDark, type Theme } from "../lib/theme";
+import { useQuery } from "../state/query";
 
 export function ThemeToggle() {
   const [, force] = useState(0);
@@ -35,6 +36,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [loc.pathname]);
+  const isAdmin = !!me?.is_instance_admin;
+  const sys = useQuery(() => api.system(), [], { enabled: isAdmin, refreshMs: 60000 });
+  const newRequests = sys.data?.requests_new ?? 0;
 
   const project = me?.projects.find((p) => p.id === id) ?? me?.projects[0];
   const org = me?.orgs.find((o) => o.id === project?.org_id) ?? me?.orgs[0];
@@ -99,6 +103,12 @@ export function Layout({ children }: { children: ReactNode }) {
 
       <div className="mt-auto flex flex-col gap-0.5 border-t hairline pt-3">
         {org && <NavLink to={`/org/${org.id}/team`} className="nav-link"><I.team /> Team</NavLink>}
+        {isAdmin && (
+          <NavLink to="/requests" className="nav-link">
+            <I.persons /> Requests
+            {newRequests > 0 && <span className="num ml-auto rounded-full bg-accent px-1.5 text-[11px] font-semibold leading-[18px] text-accent-ink">{newRequests}</span>}
+          </NavLink>
+        )}
         <NavLink to="/system" className="nav-link"><I.system /> System</NavLink>
         <div className="mt-2 flex items-center justify-between px-2">
           <NavLink to="/account" className="min-w-0 rounded-lg px-1 py-0.5 hover:bg-s2" title="Account settings">

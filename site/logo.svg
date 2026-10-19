@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="HanuAnalytics: Hanuman lifting the mountain">
+  <defs>
+    <radialGradient id="sun" cx="50%" cy="40%" r="64%">
+      <stop offset="0%" stop-color="#FFC978"/>
+      <stop offset="55%" stop-color="#FF8A1F"/>
+      <stop offset="100%" stop-color="#E35A00"/>
+    </radialGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2E2456"/>
+      <stop offset="100%" stop-color="#15102E"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2E1B4A"/>
+      <stop offset="100%" stop-color="#160D2B"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="122" fill="url(#sun)"/>
+  <circle cx="128" cy="128" r="118" fill="none" stroke="#FFE9CC" stroke-opacity=".5" stroke-width="2"/>
+  <!-- the Sanjeevani mountain, lifted whole -->
+  <g>
+    <path d="M44 76 L74 38 L92 58 L116 22 L140 56 L156 40 L186 76 Z" fill="url(#rock)"/>
+    <path d="M74 38 L68 48 L80 50 Z M116 22 L108 36 L124 36 Z M156 40 L150 50 L162 52 Z" fill="#FFF4E6"/>
+    <path d="M44 76 L186 76 L180 84 L50 84 Z" fill="#0F0A22"/>
+    <circle cx="98" cy="66" r="3" fill="#86E6B0"/><circle cx="130" cy="69" r="2.6" fill="#86E6B0"/><circle cx="160" cy="66" r="2.4" fill="#86E6B0"/>
+  </g>
+  <!-- Hanuman in flight -->
+  <g transform="translate(0 9)" fill="url(#body)" stroke="url(#body)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M136 146 C170 150 182 118 166 100 C158 92 146 100 152 110" fill="none" stroke-width="7"/>
+    <path d="M132 150 L156 172 L184 168" fill="none" stroke-width="13"/>
+    <path d="M114 150 L94 172 L108 198" fill="none" stroke-width="13"/>
+    <path d="M110 112 Q124 102 140 112 L136 152 Q122 160 112 152 Z" stroke-width="6"/>
+    <path d="M114 116 L96 96 L88 78" fill="none" stroke-width="12"/>
+    <ellipse cx="88" cy="76" rx="13" ry="5"/>
+    <path d="M136 116 L156 132 L164 148" fill="none" stroke-width="12"/>
+    <path d="M164 148 L186 172" fill="none" stroke-width="7"/>
+    <circle cx="192" cy="178" r="13"/>
+    <circle cx="192" cy="178" r="5" fill="#FFB347" stroke="none"/>
+    <circle cx="125" cy="98" r="15" stroke-width="2"/>
+    <!-- mukut (crown) -->
+    <path d="M111 92 Q125 60 139 92 Z" stroke-width="2"/>
+    <circle cx="125" cy="66" r="3" fill="#FFD27A" stroke="none"/>
+  </g>
+  <path d="M112 159 L100 175 L124 169 Z" fill="#FFD27A"/>
+</svg>

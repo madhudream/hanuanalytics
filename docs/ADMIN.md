@@ -35,7 +35,7 @@ a theme for the session (used for screenshots); the theme toggle in the sidebar 
 | route | page |
 |---|---|
 | `/setup` | first-run wizard: account → org + project + domains → snippet with "waiting for first event" poll |
-| `/login`, `/invite/:token` | sign in, accept invite |
+| `/login`, `/register`, `/invite/:token` | sign in (with a "Create an account" link when the instance allows open sign-up, and a Home link to the server-rendered `/home`), register, accept invite |
 | `/` | redirects to the first project |
 | `/p/:id` | dashboard: period picker, compare, filter chips, KPI tiles, trend chart, Pages / Sources / Locations / Devices / Events / Web vitals panels |
 | `/p/:id/live` | visitors now, per-minute columns, top pages, event feed (5 s refresh) |
@@ -47,7 +47,9 @@ a theme for the session (used for screenshots); the theme toggle in the sidebar 
 | `/p/:id/persons`, `/p/:id/persons/:did` | people and their sessions |
 | `/p/:id/sql` | read-only SQL over `events`, CSV export |
 | `/p/:id/settings?tab=` | general · domains · snippet · recording · retention · danger |
-| `/org/:org/team`, `/org/:org/new-project`, `/org/new`, `/system` | team & invites, new project, new org, system status |
+| `/org/:org/team`, `/org/:org/new-project`, `/org/new`, `/system` | team & invites, new project, new org, system status (instance admins can switch sign-up between invite-only and open) |
+| `/account` | change your name and password (linked from the sidebar footer) |
+| `/requests?status=new\|approved\|rejected\|all` | instance admin only: hosted-cloud access requests from the landing page; approve (editable org name) → invite URL with copy + mailto, or reject. The sidebar entry shows a badge with the count of new requests from `/system`. |
 
 Clicking any row in a dashboard panel adds a filter (`filters` URL param, contract format); chips remove them.
 

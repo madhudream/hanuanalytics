@@ -16,6 +16,7 @@ mod live;
 mod meta;
 mod query;
 mod recordings;
+mod requests;
 mod sessions;
 mod store;
 mod ua;
@@ -159,11 +160,18 @@ fn router(app: App) -> Router {
         .route("/projects/{id}/persons", get(admin::persons))
         .route("/projects/{id}/persons/{did}", get(admin::person))
         .route("/projects/{id}/sql", post(admin::sql))
+        .route("/requests", get(requests::list))
+        .route("/requests/{id}/approve", post(requests::approve))
+        .route("/requests/{id}/reject", post(requests::reject))
         .route("/system", get(admin::system).patch(admin::patch_system))
         .route("/system/compact", post(admin::compact));
 
     Router::new()
         .route("/health", get(|| async { "ok" }))
+        .route("/", get(assets::root))
+        .route("/home", get(assets::home))
+        .route("/site/{file}", get(assets::site_file))
+        .route("/api/public/request", post(requests::create))
         .nest("/api/v1", public)
         .nest("/api/admin", admin)
         .route("/{file}", get(sdk_or_admin))

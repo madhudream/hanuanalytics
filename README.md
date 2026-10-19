@@ -79,6 +79,11 @@ form submits, rage clicks, JavaScript errors, Web Vitals and session recording a
 people. Every project has an allow-list of domains; requests from anywhere else are refused. The SDK reference is
 in [docs/SDK.md](docs/SDK.md), the npm/ESM build in `sdk/dist/hanu.esm.js`.
 
+## Hosted beta
+
+A hosted instance runs at [analytics.carebun.com](https://analytics.carebun.com): request an account on the home
+page, free while in beta. The home page (`site/`) ships inside the binary, so every self-hosted instance has one too.
+
 ## Multi-tenant
 
 One instance serves any number of organizations and projects. New organizations are created by the admin, by
@@ -95,6 +100,7 @@ or be offered to the public.
 | [docs/SDK.md](docs/SDK.md) | the JavaScript SDK |
 | [docs/ADMIN.md](docs/ADMIN.md) | the admin app (development, pages, adding panels) |
 | [docs/PRIVACY.md](docs/PRIVACY.md) | what is collected, masking, cookieless mode, retention |
+| [docs/ONBOARDING.md](docs/ONBOARDING.md) | hosted use: requesting access, approving requests, from invite to first event |
 
 ## Repository
 

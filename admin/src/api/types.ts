@@ -97,6 +97,22 @@ export interface SetupStatus {
 
 export type SignupMode = "invite" | "open";
 
+export type RequestStatus = "new" | "approved" | "rejected";
+
+/** A hosted-cloud access request from the public landing page. */
+export interface AccessRequest {
+  id: string;
+  name: string;
+  email: string;
+  website: string;
+  message: string;
+  created_at: string;
+  status: RequestStatus;
+  invite_url?: string;
+  org_id?: string;
+  decided_at?: string;
+}
+
 export interface SystemInfo {
   version: string;
   uptime_s: number;
@@ -108,6 +124,7 @@ export interface SystemInfo {
   live: { events_30m: number };
   signup_mode: SignupMode;
   public_url: string;
+  requests_new?: number;
 }
 
 export type Period = "today" | "yesterday" | "7d" | "30d" | "90d" | "12mo" | "month" | "all" | "custom";
@@ -367,6 +384,10 @@ export interface Api {
   system(): Promise<SystemInfo>;
   compact(): Promise<{ merged_files: number; ms: number }>;
   setSignupMode(mode: SignupMode): Promise<void>;
+  // hosted-cloud access requests (instance admin only)
+  requests(status: RequestStatus | "all"): Promise<{ rows: AccessRequest[] }>;
+  approveRequest(id: string, orgName?: string): Promise<{ request: AccessRequest }>;
+  rejectRequest(id: string): Promise<{ request: AccessRequest }>;
   // stats
   overview(id: string, q: StatsQuery, interval?: Interval): Promise<Overview>;
   breakdown(id: string, q: StatsQuery, by: Dimension, limit?: number, offset?: number): Promise<Breakdown>;
