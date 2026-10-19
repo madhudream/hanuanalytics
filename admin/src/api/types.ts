@@ -217,8 +217,8 @@ export interface BreakdownRow {
   visitors: number;
   pageviews: number;
   sessions: number;
-  bounce_rate: number;
-  avg_duration_s: number;
+  bounce_rate?: number | null;
+  avg_duration_s?: number | null;
   pct: number;
 }
 
@@ -264,7 +264,7 @@ export interface ErrorRow {
 }
 
 export interface VitalStat {
-  p75: number;
+  p75: number | null;
   good: number;
   needs_improvement: number;
   poor: number;

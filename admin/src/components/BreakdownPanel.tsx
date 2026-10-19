@@ -101,7 +101,7 @@ export function DetailsModal({ open, onClose, projectId, by, title, onPick }: { 
   const { data, loading, error, refetch } = useQuery<Breakdown>(() => api.breakdown(projectId, query, by, limit, offset), [projectId, by, JSON.stringify(query), offset, open], { enabled: open });
   const rows = data?.rows ?? [];
   const csv = () => {
-    const lines = [["key", "visitors", "pageviews", "sessions", "bounce_rate", "avg_duration_s"].join(","), ...rows.map((r) => [JSON.stringify(r.label ?? r.key), r.visitors, r.pageviews, r.sessions, r.bounce_rate.toFixed(1), r.avg_duration_s.toFixed(0)].join(","))];
+    const lines = [["key", "visitors", "pageviews", "sessions", "bounce_rate", "avg_duration_s"].join(","), ...rows.map((r) => [JSON.stringify(r.label ?? r.key), r.visitors, r.pageviews, r.sessions, (r.bounce_rate ?? 0).toFixed(1), (r.avg_duration_s ?? 0).toFixed(0)].join(","))];
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
     a.download = `${by}.csv`;
@@ -134,8 +134,8 @@ export function DetailsModal({ open, onClose, projectId, by, title, onPick }: { 
                 <td className="num py-1.5 pr-2 text-right">{full(r.visitors)}</td>
                 <td className="num py-1.5 pr-2 text-right">{full(r.pageviews)}</td>
                 <td className="num py-1.5 pr-2 text-right">{full(r.sessions)}</td>
-                <td className="num py-1.5 pr-2 text-right">{r.bounce_rate.toFixed(0)}%</td>
-                <td className="num py-1.5 text-right">{duration(r.avg_duration_s)}</td>
+                <td className="num py-1.5 pr-2 text-right">{r.bounce_rate == null ? "—" : `${r.bounce_rate.toFixed(0)}%`}</td>
+                <td className="num py-1.5 text-right">{r.avg_duration_s == null ? "—" : duration(r.avg_duration_s)}</td>
               </tr>
             ))}
           </tbody>

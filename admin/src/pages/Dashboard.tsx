@@ -158,11 +158,21 @@ function VitalsPanel({ projectId }: { projectId: string }) {
           <ul className="flex flex-col gap-3">
             {VITAL_META.map((m) => {
               const v = data[m.key];
-              const status = v.p75 <= m.good ? "good" : v.p75 <= m.poor ? "warning" : "critical";
+              const p75 = v.p75 ?? null;
+              if (p75 === null || !v.n) {
+                return (
+                  <li key={m.key} className="flex items-center gap-3">
+                    <span className="w-12 text-[12.5px] font-medium text-t2">{m.label}</span>
+                    <span className="num w-20 text-[13.5px] font-semibold text-t3">—</span>
+                    <span className="text-[11.5px] text-t3">No samples yet</span>
+                  </li>
+                );
+              }
+              const status = p75 <= m.good ? "good" : p75 <= m.poor ? "warning" : "critical";
               return (
                 <li key={m.key} className="flex items-center gap-3">
                   <span className="w-12 text-[12.5px] font-medium text-t2">{m.label}</span>
-                  <span className="num w-20 text-[13.5px] font-semibold text-t1">{m.unit === "ms" ? `${(v.p75 / 1000).toFixed(2)}s` : v.p75.toFixed(2)}</span>
+                  <span className="num w-20 text-[13.5px] font-semibold text-t1">{m.unit === "ms" ? `${(p75 / 1000).toFixed(2)}s` : p75.toFixed(2)}</span>
                   <span className={`inline-flex items-center gap-1 text-[11.5px] ${status === "good" ? "text-good" : status === "warning" ? "text-serious" : "text-critical"}`}>
                     <span className={`h-1.5 w-1.5 rounded-full ${status === "good" ? "bg-good" : status === "warning" ? "bg-warning" : "bg-critical"}`} />
                     {status === "good" ? "Good" : status === "warning" ? "Needs work" : "Poor"}
