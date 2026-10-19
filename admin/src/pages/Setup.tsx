@@ -7,10 +7,11 @@ import { Button, Field, Input } from "../components/ui";
 import { DomainsEditor } from "../components/DomainsEditor";
 import { Snippet } from "../components/Snippet";
 import { I } from "../components/icons";
+import { GoogleButton, OrDivider } from "../components/GoogleButton";
 
 export function Setup() {
   const nav = useNavigate();
-  const { refresh, needsSetup, loading } = useAuth();
+  const { refresh, needsSetup, loading, google } = useAuth();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -72,8 +73,15 @@ export function Setup() {
     return (
       <AuthShell title="Set up HanuAnalytics" subtitle="Create the first admin account. This only happens once.">
         {Steps}
+        {google && (
+          <div className="mb-4 flex flex-col gap-3.5">
+            <GoogleButton />
+            <p className="-mt-1 text-center text-[12px] text-t3">Your Google account becomes the instance admin; you add a project right after.</p>
+            <OrDivider />
+          </div>
+        )}
         <form onSubmit={(e) => { e.preventDefault(); setStep(2); }} className="flex flex-col gap-3.5">
-          <Field label="Your name"><Input required value={name} onChange={(e) => setName(e.target.value)} autoFocus /></Field>
+          <Field label="Your name"><Input required value={name} onChange={(e) => setName(e.target.value)} autoFocus={!google} /></Field>
           <Field label="Email"><Input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
           <Field label="Password" hint="At least 8 characters."><Input type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
           <Button type="submit" variant="primary" className="mt-1 justify-center">Continue</Button>

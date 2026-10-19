@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
+import { GoogleButton, OrDivider } from "../components/GoogleButton";
 import { api, ApiError } from "../api";
 import { useAuth } from "../state/auth";
 import { useToast } from "../state/toast";
@@ -23,11 +24,12 @@ export function AuthShell({ children, title, subtitle }: { children: React.React
 
 export function Login() {
   const nav = useNavigate();
-  const { refresh, needsSetup, signupOpen } = useAuth();
+  const { refresh, needsSetup, signupOpen, google } = useAuth();
+  const [sp] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState(sp.get("error") ?? "");
   useEffect(() => {
     if (needsSetup) nav("/setup", { replace: true });
   }, [needsSetup, nav]);
@@ -52,6 +54,12 @@ export function Login() {
         <Field label="Password"><Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
         {err && <div className="rounded-lg bg-critical/10 px-3 py-2 text-[13px] text-critical">{err}</div>}
         <Button type="submit" variant="primary" disabled={busy} className="mt-1 justify-center">{busy ? "Signing in…" : "Sign in"}</Button>
+        {google && (
+          <>
+            <OrDivider />
+            <GoogleButton next={sp.get("next") ?? "/"} />
+          </>
+        )}
         <div className="flex items-center justify-between text-[12.5px] text-t3">
           <a href="/home" className="hover:text-t1">← Home</a>
           {signupOpen && <span>New here? <Link to="/register" className="text-t1 underline">Create an account</Link></span>}
@@ -63,7 +71,7 @@ export function Login() {
 
 export function Register() {
   const nav = useNavigate();
-  const { refresh, signupOpen, loading } = useAuth();
+  const { refresh, signupOpen, loading, google } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -99,6 +107,12 @@ export function Register() {
         <Field label="Organization name"><Input required value={orgName} onChange={(e) => setOrgName(e.target.value)} placeholder="Acme Inc" /></Field>
         {err && <div className="rounded-lg bg-critical/10 px-3 py-2 text-[13px] text-critical">{err}</div>}
         <Button type="submit" variant="primary" disabled={busy} className="mt-1 justify-center">{busy ? "Creating…" : "Create account"}</Button>
+        {google && (
+          <>
+            <OrDivider />
+            <GoogleButton />
+          </>
+        )}
         <div className="text-center text-[12.5px] text-t3">Already have an account? <Link to="/login" className="text-t1 underline">Sign in</Link></div>
       </form>
     </AuthShell>
@@ -108,7 +122,7 @@ export function Register() {
 export function AcceptInvite() {
   const { token = "" } = useParams();
   const nav = useNavigate();
-  const { refresh } = useAuth();
+  const { refresh, google } = useAuth();
   const { toast } = useToast();
   const [info, setInfo] = useState<{ org_name: string; email: string; invited_by: string } | null>(null);
   const [err, setErr] = useState("");
@@ -142,6 +156,12 @@ export function AcceptInvite() {
           <Field label="Password" hint="At least 8 characters."><Input type="password" minLength={8} required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} /></Field>
           {err && <div className="rounded-lg bg-critical/10 px-3 py-2 text-[13px] text-critical">{err}</div>}
           <Button type="submit" variant="primary" disabled={busy || !info} className="mt-1 justify-center">{busy ? "Joining…" : "Join organization"}</Button>
+          {google && info && (
+            <>
+              <OrDivider />
+              <GoogleButton invite={token} label="Join with Google" />
+            </>
+          )}
           <div className="text-center text-[12.5px] text-t3">Already have an account? <Link to="/login" className="text-t1 underline">Sign in</Link> and the invite will be applied.</div>
         </form>
       )}

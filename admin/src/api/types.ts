@@ -92,6 +92,7 @@ export interface Me {
 export interface SetupStatus {
   needs_setup: boolean;
   signup_open: boolean;
+  google: boolean;
   version: string;
 }
 

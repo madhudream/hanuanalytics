@@ -60,8 +60,10 @@ const ERRORS: readonly (readonly [string, string])[] = [
 ];
 
 // ---------- account state ----------
-let setupDone = true;
-let signupMode: SignupMode = "invite";
+// mock-only switches for screenshots: ?fresh=1 shows the setup wizard, ?signup=open opens registration
+const mockParams = new URLSearchParams(location.search);
+let setupDone = !mockParams.has("fresh");
+let signupMode: SignupMode = mockParams.get("signup") === "open" ? "open" : "invite";
 const requests: AccessRequest[] = [
   { id: "r_5", name: "Kavya Nair", email: "kavya@shopkart.in", website: "https://shopkart.in", message: "We run a D2C store with ~200k monthly visitors and want to drop GA. Session replay is the main draw.", created_at: new Date(Date.now() - 2 * 3600000).toISOString(), status: "new" },
   { id: "r_4", name: "Tom Becker", email: "tom@becker.dev", website: "becker.dev", message: "Personal blog, low traffic. Curious about the cookieless mode.", created_at: new Date(Date.now() - 9 * 3600000).toISOString(), status: "new" },
@@ -375,7 +377,7 @@ function personsFor(id: string): Person[] {
 const delay = () => sleep(120 + Math.random() * 180);
 
 export const mockApi: Api = {
-  async setupStatus() { await delay(); return { needs_setup: !setupDone, signup_open: signupMode === "open", version: "0.1.0 (mock)" }; },
+  async setupStatus() { await delay(); return { needs_setup: !setupDone, signup_open: signupMode === "open", google: true, version: "0.1.0 (mock)" }; },
   async register(body) {
     await delay();
     if (signupMode !== "open") throw new ApiError(403, "sign-up is by invitation on this instance");
